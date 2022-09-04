@@ -14,8 +14,8 @@ fn main() {
 
     // image
     let path = &args[1];
-    let aspect_ratio = 16.0 / 9.0;
-    let image_width = 400;
+    let aspect_ratio = 1.0 / 1.0;
+    let image_width = 200;
     let image_height = (image_width as f64 / aspect_ratio) as i32;
 
     let file = File::create(path).expect("Unable to open file");
@@ -45,11 +45,10 @@ fn main() {
 
             let ray = Ray::new(origin, lower_left_corner + u * horizontal + v * vertical - origin);
 
-            let mut color = Color::new(0.0, 0.0, 0.0);
-
-            if sphere.hit(&ray) {
-                color = Color::new(1.0, 0.0, 0.0);
-            }
+            let color = match sphere.hit(&ray) {
+                None => Color::new(0.0, 0.0, 0.0),
+                Some(color) => color
+            };
 
             let ir = (255.999 * color.x()) as i32;
             let ig = (255.999 * color.y()) as i32;
