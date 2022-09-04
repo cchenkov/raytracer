@@ -25,4 +25,3 @@ impl Ray {
         self.origin + self.direction * t
     }
 }
-
