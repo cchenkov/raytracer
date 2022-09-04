@@ -35,7 +35,8 @@ fn main() {
     // ppm file format header
     write!(file_writer, "P3\n{} {}\n255\n", image_width, image_height).expect("Unable to write file");
 
-    let sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5);
+    let background = Color::new(0.0, 0.0, 0.0);
+    let sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, Color::new(1.0, 0.0, 0.0));
 
     // render
     for i in (0..image_height).rev() {
@@ -46,7 +47,7 @@ fn main() {
             let ray = Ray::new(origin, lower_left_corner + u * horizontal + v * vertical - origin);
 
             let color = match sphere.hit(&ray) {
-                None => Color::new(0.0, 0.0, 0.0),
+                None => background,
                 Some(color) => color
             };
 

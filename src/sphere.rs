@@ -6,14 +6,16 @@ use Vec3 as Color;
 
 pub struct Sphere {
     pub center: Point3,
-    pub radius: f64
+    pub radius: f64,
+    pub color: Color
 }
 
 impl Sphere {
-    pub fn new(center: Point3, radius: f64) -> Sphere {
+    pub fn new(center: Point3, radius: f64, color: Color) -> Sphere {
         Sphere {
             center,
-            radius
+            radius,
+            color
         }
     }
 
@@ -34,9 +36,7 @@ impl Sphere {
         let normal = hit_point.normalized();
         let light = Vec3::new(1.0, 1.0, -1.0).normalized();
 
-        let color = Color::new(1.0, 0.0, 0.0) * normal.dot(light).max(0.0);
-
-        return Some(color);
+        Some(self.color * normal.dot(light).max(0.0))
     }
 }
 
