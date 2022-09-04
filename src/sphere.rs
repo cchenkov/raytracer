@@ -21,9 +21,9 @@ impl Sphere {
 
     pub fn hit(&self, ray: &Ray) -> Option<Color> {
         let oc = ray.origin() - self.center;
-        let a = ray.direction().dot(ray.direction());
+        let a = ray.direction().length_squared();
         let half_b = ray.direction().dot(oc);
-        let c = oc.dot(oc) - self.radius * self.radius;
+        let c = oc.length_squared() - self.radius * self.radius;
         let discriminant = half_b * half_b - a * c;
 
         if discriminant < 0.0 {
@@ -32,9 +32,14 @@ impl Sphere {
 
         let t = (-half_b - discriminant.sqrt()) / a;
 
-        let hit_point = ray.origin() + ray.direction() * t;
-        let normal = hit_point.normalized();
-        let light = Vec3::new(1.0, 1.0, -1.0).normalized();
+        let hit_point = ray.at(t);
+        
+        // let normal = hit_point.normalized();
+        let mut normal = (hit_point - self.center) / self.radius;
+        let front_face = ray.direction().dot(normal) < 0.0;
+        let light = Vec3::new(1.0, 1.0, 1.0).normalized();
+
+        normal = if front_face { normal } else { -normal };
 
         Some(self.color * normal.dot(light).max(0.0))
     }
