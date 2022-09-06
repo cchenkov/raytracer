@@ -75,10 +75,28 @@ impl Box3 {
             tmax = tzmax;
         }
 
-        if tmin < f64::INFINITY && tmax > 0.000001 {
-            return Some(self.color);
+        if tmin >= f64::INFINITY || tmax <= 0.001 {
+            return None;
         }
 
-        None
+        let hit_point = ray.at(tmin);
+        let mut normal: Vec3;
+
+        if hit_point.x() == self.min_bound.x() || hit_point.x() == self.max_bound.x() {
+            normal = Vec3::new(1.0, 0.0, 0.0);
+        }
+        else if hit_point.y() == self.min_bound.y() || hit_point.y() == self.max_bound.y() {
+            normal = Vec3::new(0.0, 1.0, 0.0);
+        }
+        else {
+            normal = Vec3::new(0.0, 0.0, 1.0);
+        }
+
+        let light = Vec3::new(1.0, 1.0, 1.0).normalized();
+        let front_face = ray.direction().dot(normal) < 0.0;
+
+        normal = if front_face { normal } else { -normal };
+
+        Some(self.color * normal.dot(light).max(0.0))
     }
 }
