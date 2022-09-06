@@ -20,57 +20,18 @@ impl Box3 {
     }
 
     pub fn hit(&self, ray: &Ray) -> Option<Color> {
-        let (mut tmin, mut tmax, tymin, tymax, tzmin, tzmax) : (f64, f64, f64, f64, f64, f64);
+        let mut tmin: f64 = 0.001;
+        let mut tmax: f64 = f64::INFINITY;
 
-        if ray.direction().x() >= 0.0 {
-            tmin = (self.min_bound.x() - ray.origin().x()) * ray.direction_inv().x();
-            tmax = (self.max_bound.x() - ray.origin().x()) * ray.direction_inv().x();
-        } else {
-            tmin = (self.max_bound.x() - ray.origin().x()) * ray.direction_inv().x();
-            tmax = (self.min_bound.x() - ray.origin().x()) * ray.direction_inv().x();
+        for i in 0..3 {
+            let t1 = (self.min_bound[i] - ray.origin()[i]) * ray.direction_inv()[i];
+            let t2 = (self.max_bound[i] - ray.origin()[i]) * ray.direction_inv()[i];
+
+            tmin = tmin.max(t1.min(t2));
+            tmax = tmax.min(t1.max(t2));
         }
 
-        if ray.direction().y() >= 0.0 {
-            tymin = (self.min_bound.y() - ray.origin().y()) * ray.direction_inv().y();
-            tymax = (self.max_bound.y() - ray.origin().y()) * ray.direction_inv().y();
-        } else {
-            tymin = (self.max_bound.y() - ray.origin().y()) * ray.direction_inv().y();
-            tymax = (self.min_bound.y() - ray.origin().y()) * ray.direction_inv().y();
-        }
-
-        if tmin > tymax || tymin > tmax {
-            return None;
-        }
-
-        if tymin > tmin {
-            tmin = tymin;
-        }
-
-        if tymax < tmax {
-            tmax = tymax;
-        }
-
-        if ray.direction().z() >= 0.0 {
-            tzmin = (self.min_bound.z() - ray.origin().z()) * ray.direction_inv().z();
-            tzmax = (self.max_bound.z() - ray.origin().z()) * ray.direction_inv().z();
-        } else {
-            tzmin = (self.max_bound.z() - ray.origin().z()) * ray.direction_inv().z();
-            tzmax = (self.min_bound.z() - ray.origin().z()) * ray.direction_inv().z();
-        }
-
-        if tmin > tzmax || tzmin > tmax {
-            return None;
-        }
-
-        if tzmin > tmin {
-            tmin = tzmin;
-        }
-
-        if tzmax < tmax {
-            tmax = tzmax;
-        }
-
-        if tmin >= f64::INFINITY || tmax <= 0.001 {
+        if tmin > tmax {
             return None;
         }
 
