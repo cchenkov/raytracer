@@ -35,13 +35,9 @@ impl Sphere {
         let hit_point = ray.at(t);
         
         // let normal = hit_point.normalized();
-        let mut normal = (hit_point - self.center) / self.radius;
-        let front_face = ray.direction().dot(normal) < 0.0;
+        let normal = (hit_point - self.center) / self.radius;
         let light = Vec3::new(1.0, 1.0, 1.0).normalized();
-
-        normal = if front_face { normal } else { -normal };
 
         Some(self.color * normal.dot(light).max(0.0))
     }
 }
-
