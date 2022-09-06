@@ -20,12 +20,7 @@ impl Box3 {
     }
 
     pub fn hit(&self, ray: &Ray) -> Option<Color> {
-        let mut tmin: f64;
-        let mut tmax: f64;
-        let tymin: f64;
-        let tymax: f64;
-        let tzmin: f64;
-        let tzmax: f64;
+        let (mut tmin, mut tmax, tymin, tymax, tzmin, tzmax) : (f64, f64, f64, f64, f64, f64);
 
         if ray.direction().x() >= 0.0 {
             tmin = (self.min_bound.x() - ray.origin().x()) * ray.direction_inv().x();
