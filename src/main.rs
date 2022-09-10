@@ -15,7 +15,7 @@ fn main() {
 
     // image
     let path = &args[1];
-    let aspect_ratio = 1.0 / 1.0;
+    let aspect_ratio = 1.0;
     let image_width = 800;
     let image_height = (image_width as f64 / aspect_ratio) as i32;
 
@@ -37,7 +37,7 @@ fn main() {
     write!(file_writer, "P3\n{} {}\n255\n", image_width, image_height).expect("Unable to write file");
 
     let background = Color::new(0.0, 0.0, 0.0);
-    let sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, Color::new(1.0, 0.0, 0.0));
+    let _sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, Color::new(1.0, 0.0, 0.0));
     let cube = Box3::new(Point3::new(-0.25, -0.25, -0.25), Point3::new(0.25, 0.25, 0.25), Color::new(1.0, 0.0, 0.0));
 
     // render
@@ -57,7 +57,7 @@ fn main() {
             let ig = (255.999 * color.y()) as i32;
             let ib = (255.999 * color.z()) as i32;
 
-            write!(file_writer, "{} {} {}\n", ir, ig, ib).expect("Unable to write file");
+            writeln!(file_writer, "{} {} {}", ir, ig, ib).expect("Unable to write file");
         }
     }
 }

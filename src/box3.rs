@@ -37,9 +37,12 @@ impl Box3 {
 
         let hit_point = ray.at(tmin);
 
-        let normal_x: f64 = if hit_point.x() == self.min_bound.x() || hit_point.x() == self.max_bound.x() { 1.0 } else { 0.0 };
-        let normal_y: f64 = if hit_point.y() == self.min_bound.y() || hit_point.y() == self.max_bound.y() { 1.0 } else { 0.0 };
-        let normal_z: f64 = if hit_point.z() == self.min_bound.z() || hit_point.z() == self.max_bound.z() { 1.0 } else { 0.0 };
+        let normal_x: f64 = if (hit_point.x() - self.min_bound.x()).abs() < f64::EPSILON 
+                            || (hit_point.x() - self.max_bound.x()).abs() < f64::EPSILON { 1.0 } else { 0.0 };
+        let normal_y: f64 = if (hit_point.y() - self.min_bound.y()).abs() < f64::EPSILON 
+                            || (hit_point.y() - self.max_bound.y()).abs() < f64::EPSILON { 1.0 } else { 0.0 };
+        let normal_z: f64 = if (hit_point.z() - self.min_bound.z()).abs() < f64::EPSILON 
+                            || (hit_point.z() - self.max_bound.z()).abs() < f64::EPSILON { 1.0 } else { 0.0 };
 
         let normal = Vec3::new(normal_x, normal_y, normal_z);
         let light = Vec3::new(1.0, 1.0, 1.0).normalized();
