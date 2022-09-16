@@ -24,7 +24,7 @@ fn main() {
     let mut file_writer = BufWriter::new(file);
 
     // camera
-    let camera = Camera::new();
+    let camera = Camera::new(90.0, aspect_ratio);
 
     // ppm file format header
     write!(file_writer, "P3\n{} {}\n255\n", image_width, image_height).expect("Unable to write file");
