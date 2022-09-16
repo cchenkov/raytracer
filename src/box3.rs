@@ -47,6 +47,8 @@ impl Box3 {
         let normal = Vec3::new(normal_x, normal_y, normal_z);
         let light = Vec3::new(1.0, 1.0, 1.0).normalized();
 
-        Some(self.color * normal.dot(light).max(0.0))
+        // Some(self.color * normal.dot(light).max(0.0))
+        
+        Some(self.color)
     }
 }

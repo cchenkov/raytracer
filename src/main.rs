@@ -24,14 +24,20 @@ fn main() {
     let mut file_writer = BufWriter::new(file);
 
     // camera
-    let camera = Camera::new(90.0, aspect_ratio);
+    let camera = Camera::new(
+        Point3::new(1.0, 1.0, 2.0), 
+        Point3::new(0.0, 0.0, -1.0), 
+        Vec3::new(0.0, 1.0, 0.0), 
+        90.0, 
+        aspect_ratio,
+    );
 
     // ppm file format header
     write!(file_writer, "P3\n{} {}\n255\n", image_width, image_height).expect("Unable to write file");
 
     let background = Color::new(0.0, 0.0, 0.0);
-    let sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, Color::new(1.0, 0.0, 0.0));
-    let _cube = Box3::new(Point3::new(-0.25, -0.25, -0.25), Point3::new(0.25, 0.25, 0.25), Color::new(1.0, 0.0, 0.0));
+    let _sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, Color::new(1.0, 0.0, 0.0));
+    let cube = Box3::new(Point3::new(-0.25, -0.25, -0.25), Point3::new(0.25, 0.25, 0.25), Color::new(1.0, 0.0, 0.0));
 
     // render
     for i in (0..image_height).rev() {
@@ -41,7 +47,7 @@ fn main() {
 
             let ray = camera.get_ray(u, v);
 
-            let color = match sphere.hit(&ray) {
+            let color = match cube.hit(&ray) {
                 None => background,
                 Some(color) => color
             };
