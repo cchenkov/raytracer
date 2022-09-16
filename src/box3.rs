@@ -37,15 +37,18 @@ impl Box3 {
 
         let hit_point = ray.at(tmin);
 
-        let normal_x: f64 = if (hit_point.x() - self.min_bound.x()).abs() < 1.0 
-                            || (hit_point.x() - self.max_bound.x()).abs() < 1.0 { hit_point.x() } else { 0.0 };
-        let normal_y: f64 = if (hit_point.y() - self.min_bound.y()).abs() < 1.0 
-                            || (hit_point.y() - self.max_bound.y()).abs() < 1.0 { hit_point.y() } else { 0.0 };
-        let normal_z: f64 = if (hit_point.z() - self.min_bound.z()).abs() < 1.0 
-                            || (hit_point.z() - self.max_bound.z()).abs() < 1.0 { hit_point.z() } else { 0.0 };
+        let normal_x: f64 = if (hit_point.x() - self.min_bound.x()).abs() < 0.00001 
+                            || (hit_point.x() - self.max_bound.x()).abs() < 0.00001 { 1.0 } else { 0.0 };
+        let normal_y: f64 = if (hit_point.y() - self.min_bound.y()).abs() < 0.00001 
+                            || (hit_point.y() - self.max_bound.y()).abs() < 0.00001 { 1.0 } else { 0.0 };
+        let normal_z: f64 = if (hit_point.z() - self.min_bound.z()).abs() < 0.00001 
+                            || (hit_point.z() - self.max_bound.z()).abs() < 0.00001 { 1.0 } else { 0.0 };
 
-        let normal = Vec3::new(normal_x, normal_y, normal_z).normalized();
-        let light = Vec3::new(0.0, 0.25, 1.0).normalized();
+        let mut normal = Vec3::new(normal_x, normal_y, normal_z).normalized();
+        let front_face = ray.direction().dot(normal) < 0.0;
+        normal = if front_face { normal } else { -normal };
+
+        let light = Vec3::new(0.25, 0.5, 0.75).normalized();
 
         Some(self.color * normal.dot(light).max(0.0))
     }

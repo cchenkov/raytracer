@@ -35,9 +35,10 @@ fn main() {
     // ppm file format header
     write!(file_writer, "P3\n{} {}\n255\n", image_width, image_height).expect("Unable to write file");
 
-    let background = Color::new(0.0, 0.0, 0.0);
-    let _sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, Color::new(1.0, 0.0, 0.0));
-    let cube = Box3::new(Point3::new(-1.0, -1.0, -1.0), Point3::new(1.0, 1.0, 1.0), Color::new(1.0, 0.0, 0.0));
+    let red_color = Color::new(196.0 / 255.0, 30.0 / 255.0, 58.0 / 255.0);
+    let background = Color::new(0.5, 0.5, 0.5);
+    let _sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, red_color);
+    let cube = Box3::new(Point3::new(-1.0, -1.0, -1.0), Point3::new(1.0, 1.0, 1.0), red_color);
 
     // render
     for i in (0..image_height).rev() {
