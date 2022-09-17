@@ -12,7 +12,8 @@ pub struct Camera {
 
 impl Camera {
     pub fn new(look_from: Point3, look_at: Point3, vup: Vec3, vfov: f64, aspect_ratio: f64) -> Camera {
-        let h = (vfov.to_radians() / 2.0).tan();
+        let theta = vfov.to_radians();
+        let h = (theta / 2.0).tan();
         let viewport_height = 2.0 * h;
         let viewport_width = aspect_ratio * viewport_height;
         

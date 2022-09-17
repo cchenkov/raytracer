@@ -1,4 +1,5 @@
 use std::env;
+use std::time;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 
@@ -19,6 +20,7 @@ fn main() {
     let aspect_ratio = 1.0;
     let image_width = 800;
     let image_height = (image_width as f64 / aspect_ratio) as i32;
+    let samples_per_pixel = 8;
 
     // output file
     let file = File::create(path).expect("Unable to open file");
@@ -39,27 +41,45 @@ fn main() {
     // objects
     let red_color = Color::new(196.0 / 255.0, 30.0 / 255.0, 58.0 / 255.0);
     let background = Color::new(0.5, 0.5, 0.5);
-    let _sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, red_color);
+    let _sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 1.0, red_color);
     let cube = Box3::new(Point3::new(-1.0, -1.0, -1.0), Point3::new(1.0, 1.0, 1.0), red_color);
 
     // render
-    for i in (0..image_height).rev() {
-        for j in 0..image_width {
-            let u = f64::from(j) / f64::from(image_width - 1);
-            let v = f64::from(i) / f64::from(image_height - 1);
+    let timer = time::Instant::now();
 
-            let ray = camera.get_ray(u, v);
+    println!("Rendering started...");
 
-            let color = match cube.hit(&ray) {
-                None => background,
-                Some(color) => color
-            };
+    for y in (0..image_height).rev() {
+        for x in 0..image_width {
+            let mut pixel_color = Color::new(0.0, 0.0, 0.0);
 
-            let ir = (255.999 * color.x()) as i32;
-            let ig = (255.999 * color.y()) as i32;
-            let ib = (255.999 * color.z()) as i32;
+            for dx in (-samples_per_pixel / 2)..(samples_per_pixel / 2) {
+                for dy in (-samples_per_pixel / 2)..(samples_per_pixel / 2) {
+                    let u = (f64::from(x) + f64::from(dx) / f64::from(samples_per_pixel)) / f64::from(image_width - 1);
+                    let v = (f64::from(y) + f64::from(dy) / f64::from(samples_per_pixel)) / f64::from(image_height - 1);
+
+                    let ray = camera.get_ray(u, v);
+
+                    pixel_color = pixel_color + match cube.hit(&ray) {
+                        None => background,
+                        Some(color) => color
+                    };
+                }
+            }
+
+            let scale = 1.0 / f64::from(samples_per_pixel * samples_per_pixel);
+
+            let r = pixel_color.x() * scale;
+            let g = pixel_color.y() * scale;
+            let b = pixel_color.z() * scale;
+
+            let ir = (255.999 * r) as i32;
+            let ig = (255.999 * g) as i32;
+            let ib = (255.999 * b) as i32;
 
             writeln!(file_writer, "{} {} {}", ir, ig, ib).expect("Unable to write file");
         }
     }
+
+    println!("Rendering finished. Elapsed time: {}ms", timer.elapsed().as_millis());
 }
