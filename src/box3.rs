@@ -1,5 +1,6 @@
 use crate::vec3::Vec3;
 use crate::ray::Ray;
+use crate::hit::Hit;
 
 use Vec3 as Point3;
 use Vec3 as Color;
@@ -18,8 +19,10 @@ impl Box3 {
             color
         }
     }
+}
 
-    pub fn hit(&self, ray: &Ray) -> Option<Color> {
+impl Hit for Box3 {
+    fn hit(&self, ray: &Ray) -> Option<Color> {
         let mut tmin: f64 = 0.001;
         let mut tmax: f64 = f64::INFINITY;
 
@@ -53,3 +56,4 @@ impl Box3 {
         Some(self.color * normal.dot(light).max(0.0))
     }
 }
+

@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::{BufWriter, Write};
 
 use raytracer::vec3::Vec3;
+use raytracer::hit::Hit;
 use raytracer::sphere::Sphere;
 use raytracer::box3::Box3;
 use raytracer::camera::Camera;
@@ -19,8 +20,8 @@ fn main() {
     let image_width = 800;
     let image_height = (image_width as f64 / aspect_ratio) as i32;
 
+    // output file
     let file = File::create(path).expect("Unable to open file");
-
     let mut file_writer = BufWriter::new(file);
 
     // camera
@@ -35,6 +36,7 @@ fn main() {
     // ppm file format header
     write!(file_writer, "P3\n{} {}\n255\n", image_width, image_height).expect("Unable to write file");
 
+    // objects
     let red_color = Color::new(196.0 / 255.0, 30.0 / 255.0, 58.0 / 255.0);
     let background = Color::new(0.5, 0.5, 0.5);
     let _sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, red_color);

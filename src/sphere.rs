@@ -1,5 +1,6 @@
 use crate::vec3::Vec3;
 use crate::ray::Ray;
+use crate::hit::Hit;
 
 use Vec3 as Point3;
 use Vec3 as Color;
@@ -18,8 +19,10 @@ impl Sphere {
             color
         }
     }
+}
 
-    pub fn hit(&self, ray: &Ray) -> Option<Color> {
+impl Hit for Sphere {
+    fn hit(&self, ray: &Ray) -> Option<Color> {
         let oc = ray.origin() - self.center;
         let a = ray.direction().length_squared();
         let half_b = ray.direction().dot(oc);
@@ -41,3 +44,4 @@ impl Sphere {
         Some(self.color * normal.dot(light).max(0.0))
     }
 }
+
