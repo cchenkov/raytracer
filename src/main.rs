@@ -12,6 +12,10 @@ use raytracer::camera::Camera;
 use Vec3 as Point3;
 use Vec3 as Color;
 
+fn div_up(a: i32, b: i32) -> i32 {
+    (a + (b - 1)) / b
+}
+
 fn main() {
     let args : Vec<String> = env::args().collect();
 
@@ -20,7 +24,7 @@ fn main() {
     let aspect_ratio = 1.0;
     let image_width = 800;
     let image_height = (image_width as f64 / aspect_ratio) as i32;
-    let samples_per_pixel = 8;
+    let samples_per_pixel = 4;
 
     // output file
     let file = File::create(path).expect("Unable to open file");
@@ -41,8 +45,8 @@ fn main() {
     // objects
     let red_color = Color::new(196.0 / 255.0, 30.0 / 255.0, 58.0 / 255.0);
     let background = Color::new(0.5, 0.5, 0.5);
-    let _sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 1.0, red_color);
-    let cube = Box3::new(Point3::new(-1.0, -1.0, -1.0), Point3::new(1.0, 1.0, 1.0), red_color);
+    let sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 1.0, red_color);
+    let _cube = Box3::new(Point3::new(-1.0, -1.0, -1.0), Point3::new(1.0, 1.0, 1.0), red_color);
 
     // render
     let timer = time::Instant::now();
@@ -53,14 +57,14 @@ fn main() {
         for x in 0..image_width {
             let mut pixel_color = Color::new(0.0, 0.0, 0.0);
 
-            for dx in (-samples_per_pixel / 2)..(samples_per_pixel / 2) {
-                for dy in (-samples_per_pixel / 2)..(samples_per_pixel / 2) {
+            for dx in (-samples_per_pixel / 2)..div_up(samples_per_pixel, 2) {
+                for dy in (-samples_per_pixel / 2)..div_up(samples_per_pixel, 2) {
                     let u = (f64::from(x) + f64::from(dx) / f64::from(samples_per_pixel)) / f64::from(image_width - 1);
                     let v = (f64::from(y) + f64::from(dy) / f64::from(samples_per_pixel)) / f64::from(image_height - 1);
 
                     let ray = camera.get_ray(u, v);
 
-                    pixel_color = pixel_color + match cube.hit(&ray) {
+                    pixel_color = pixel_color + match sphere.hit(&ray) {
                         None => background,
                         Some(color) => color
                     };
