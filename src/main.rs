@@ -3,18 +3,16 @@ use std::time;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 
+use raytracer::math::{div_up, clamp};
 use raytracer::vec3::Vec3;
 use raytracer::hit::Hit;
 use raytracer::sphere::Sphere;
 use raytracer::box3::Box3;
 use raytracer::camera::Camera;
+use raytracer::progressbar::ProgressBar;
 
 use Vec3 as Point3;
 use Vec3 as Color;
-
-fn div_up(a: i32, b: i32) -> i32 {
-    (a + (b - 1)) / b
-}
 
 fn main() {
     let args : Vec<String> = env::args().collect();
@@ -45,13 +43,18 @@ fn main() {
     // objects
     let red_color = Color::new(196.0 / 255.0, 30.0 / 255.0, 58.0 / 255.0);
     let background = Color::new(0.5, 0.5, 0.5);
-    let sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 1.0, red_color);
-    let _cube = Box3::new(Point3::new(-1.0, -1.0, -1.0), Point3::new(1.0, 1.0, 1.0), red_color);
+    let _sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 1.0, red_color);
+    let cube = Box3::new(Point3::new(-1.0, -1.0, -1.0), Point3::new(1.0, 1.0, 1.0), red_color);
+
+    // progress bar
+    let total: usize = (image_width * image_height).try_into().unwrap();
+    let mut stdout = std::io::stdout();
+    let mut progress_bar = ProgressBar::new(total, 50, &mut stdout);
 
     // render
     let timer = time::Instant::now();
 
-    println!("Rendering started...");
+    println!("\nRendering started...\n");
 
     for y in (0..image_height).rev() {
         for x in 0..image_width {
@@ -64,7 +67,7 @@ fn main() {
 
                     let ray = camera.get_ray(u, v);
 
-                    pixel_color = pixel_color + match sphere.hit(&ray) {
+                    pixel_color = pixel_color + match cube.hit(&ray) {
                         None => background,
                         Some(color) => color
                     };
@@ -77,13 +80,15 @@ fn main() {
             let g = pixel_color.y() * scale;
             let b = pixel_color.z() * scale;
 
-            let ir = (255.999 * r) as i32;
-            let ig = (255.999 * g) as i32;
-            let ib = (255.999 * b) as i32;
+            let ir = (255.0 * clamp(r, 0.0, 1.0)) as i32;
+            let ig = (255.0 * clamp(g, 0.0, 1.0)) as i32;
+            let ib = (255.0 * clamp(b, 0.0, 1.0)) as i32;
 
             writeln!(file_writer, "{} {} {}", ir, ig, ib).expect("Unable to write file");
+
+            progress_bar.increment(1);
         }
     }
 
-    println!("Rendering finished. Elapsed time: {}ms", timer.elapsed().as_millis());
+    println!("\n\nRendering finished...\nElapsed time: {}ms\n", timer.elapsed().as_millis());
 }

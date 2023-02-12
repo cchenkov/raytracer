@@ -19,6 +19,20 @@ impl Box3 {
             color
         }
     }
+
+    pub fn normal_at(&self, point: Point3) -> Vec3 {
+        let normal_x: f64 = if (point.x() - self.min_bound.x()).abs() < 0.000001
+                            || (point.x() - self.max_bound.x()).abs() < 0.000001
+                            { 1.0 } else { 0.0 };
+        let normal_y: f64 = if (point.y() - self.min_bound.y()).abs() < 0.000001
+                            || (point.y() - self.max_bound.y()).abs() < 0.000001
+                            { 1.0 } else { 0.0 };
+        let normal_z: f64 = if (point.z() - self.min_bound.z()).abs() < 0.000001
+                            || (point.z() - self.max_bound.z()).abs() < 0.000001
+                            { 1.0 } else { 0.0 };
+
+        Vec3::new(normal_x, normal_y, normal_z).normalized()
+    }
 }
 
 impl Hit for Box3 {
@@ -40,14 +54,7 @@ impl Hit for Box3 {
 
         let hit_point = ray.at(tmin);
 
-        let normal_x: f64 = if (hit_point.x() - self.min_bound.x()).abs() < 0.00001 
-                            || (hit_point.x() - self.max_bound.x()).abs() < 0.00001 { 1.0 } else { 0.0 };
-        let normal_y: f64 = if (hit_point.y() - self.min_bound.y()).abs() < 0.00001 
-                            || (hit_point.y() - self.max_bound.y()).abs() < 0.00001 { 1.0 } else { 0.0 };
-        let normal_z: f64 = if (hit_point.z() - self.min_bound.z()).abs() < 0.00001 
-                            || (hit_point.z() - self.max_bound.z()).abs() < 0.00001 { 1.0 } else { 0.0 };
-
-        let mut normal = Vec3::new(normal_x, normal_y, normal_z).normalized();
+        let mut normal = self.normal_at(hit_point);
         let front_face = ray.direction().dot(normal) < 0.0;
         normal = if front_face { normal } else { -normal };
 
@@ -56,4 +63,3 @@ impl Hit for Box3 {
         Some(self.color * normal.dot(light).max(0.0))
     }
 }
-
