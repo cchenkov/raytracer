@@ -1,6 +1,6 @@
 use crate::vec3::Vec3;
 use crate::ray::Ray;
-use crate::hit::Hit;
+use crate::hit::{HitRecord, Hit};
 
 use Vec3 as Point3;
 use Vec3 as Color;
@@ -24,9 +24,11 @@ impl Box3 {
         let normal_x: f64 = if (point.x() - self.min_bound.x()).abs() < 0.000001
                             || (point.x() - self.max_bound.x()).abs() < 0.000001
                             { 1.0 } else { 0.0 };
+
         let normal_y: f64 = if (point.y() - self.min_bound.y()).abs() < 0.000001
                             || (point.y() - self.max_bound.y()).abs() < 0.000001
                             { 1.0 } else { 0.0 };
+
         let normal_z: f64 = if (point.z() - self.min_bound.z()).abs() < 0.000001
                             || (point.z() - self.max_bound.z()).abs() < 0.000001
                             { 1.0 } else { 0.0 };
@@ -36,9 +38,9 @@ impl Box3 {
 }
 
 impl Hit for Box3 {
-    fn hit(&self, ray: &Ray) -> Option<Color> {
-        let mut tmin: f64 = 0.001;
-        let mut tmax: f64 = f64::INFINITY;
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+        let mut tmin: f64 = t_min;
+        let mut tmax: f64 = t_max;
 
         for i in 0..3 {
             let t1 = (self.min_bound[i] - ray.origin()[i]) * ray.direction_inv()[i];
@@ -53,13 +55,15 @@ impl Hit for Box3 {
         }
 
         let hit_point = ray.at(tmin);
-
-        let mut normal = self.normal_at(hit_point);
+        let normal = self.normal_at(hit_point);
         let front_face = ray.direction().dot(normal) < 0.0;
-        normal = if front_face { normal } else { -normal };
 
-        let light = Vec3::new(0.25, 0.5, 0.75).normalized();
-
-        Some(self.color * normal.dot(light).max(0.0))
+        Some(HitRecord {
+            tmin,
+            point: hit_point,
+            normal: if front_face { normal } else { -normal },
+            front_face,
+            color: self.color
+        })
     }
 }

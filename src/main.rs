@@ -30,7 +30,7 @@ fn main() {
 
     // camera
     let camera = Camera::new(
-        Point3::new(3.0, 3.0, 6.0), 
+        Point3::new(3.0, 3.0, 10.0), 
         Point3::new(0.0, 0.0, -1.0), 
         Vec3::new(0.0, 1.0, 0.0), 
         90.0, 
@@ -41,18 +41,24 @@ fn main() {
     write!(file_writer, "P3\n{} {}\n255\n", image_width, image_height).expect("Unable to write file");
 
     // objects
-    let red_color = Color::new(196.0 / 255.0, 30.0 / 255.0, 58.0 / 255.0);
-    let background = Color::new(0.5, 0.5, 0.5);
-    let _sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 1.0, red_color);
+    let color_multiplier = 1.0 / 255.0;
+    let green_color = Color::new(34.0, 139.0, 34.0) * color_multiplier;
+    let red_color = Color::new(196.0, 30.0, 58.0) * color_multiplier;
+    let background = Color::new(127.0, 127.0, 127.0) * color_multiplier;
+    let _sphere = Sphere::new(Point3::new(2.0, 0.0, 4.0), 1.0, green_color);
     let cube = Box3::new(Point3::new(-1.0, -1.0, -1.0), Point3::new(1.0, 1.0, 1.0), red_color);
 
     // progress bar
+    let length: usize = 50;
     let total: usize = (image_width * image_height).try_into().unwrap();
     let mut stdout = std::io::stdout();
-    let mut progress_bar = ProgressBar::new(total, 50, &mut stdout);
+    let mut progress_bar = ProgressBar::new(total, length, &mut stdout);
 
     // render
     let timer = time::Instant::now();
+    let tmin: f64 = 0.001;
+    let tmax: f64 = f64::INFINITY;
+    let light = Vec3::new(0.25, 0.5, 0.75).normalized();
 
     println!("\nRendering started...\n");
 
@@ -67,10 +73,11 @@ fn main() {
 
                     let ray = camera.get_ray(u, v);
 
-                    pixel_color = pixel_color + match cube.hit(&ray) {
-                        None => background,
-                        Some(color) => color
-                    };
+                    if let Some(record) = cube.hit(&ray, tmin, tmax) {
+                        pixel_color = pixel_color + record.color * record.normal.dot(light).max(0.0);
+                    } else {
+                        pixel_color = pixel_color + background;
+                    }
                 }
             }
 

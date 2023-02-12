@@ -1,6 +1,6 @@
 use crate::vec3::Vec3;
 use crate::ray::Ray;
-use crate::hit::Hit;
+use crate::hit::{HitRecord, Hit};
 
 use Vec3 as Point3;
 use Vec3 as Color;
@@ -22,7 +22,7 @@ impl Sphere {
 }
 
 impl Hit for Sphere {
-    fn hit(&self, ray: &Ray) -> Option<Color> {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let oc = ray.origin() - self.center;
         let a = ray.direction().length_squared();
         let half_b = ray.direction().dot(oc);
@@ -33,15 +33,28 @@ impl Hit for Sphere {
             return None;
         }
 
-        let t = (-half_b - discriminant.sqrt()) / a;
+        let sqrtd = discriminant.sqrt();
+        let mut t = (-half_b - sqrtd) / a;
+
+        if t < t_min || t > t_max {
+            t = (-half_b + sqrtd) / a;
+
+            if t < t_min || t > t_max {
+                return None;
+            }
+        }
 
         let hit_point = ray.at(t);
-        
-        // let normal = hit_point.normalized();
         let normal = (hit_point - self.center) / self.radius;
-        let light = Vec3::new(1.0, 1.0, 1.0).normalized();
+        let front_face = ray.direction().dot(normal) < 0.0;
 
-        Some(self.color * normal.dot(light).max(0.0))
+        Some(HitRecord {
+            tmin: t,
+            point: hit_point,
+            normal: if front_face { normal } else { -normal },
+            front_face,
+            color: self.color
+        })
     }
 }
 
