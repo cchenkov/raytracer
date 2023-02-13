@@ -1,6 +1,8 @@
 use crate::vec3::Vec3;
 use crate::ray::Ray;
 use crate::hit::{HitRecord, Hit};
+use crate::transform::{Transform, TransformMatrix};
+use crate::math::transpose;
 
 use Vec3 as Point3;
 use Vec3 as Color;
@@ -8,15 +10,17 @@ use Vec3 as Color;
 pub struct Box3 {
     pub min_bound: Point3,
     pub max_bound: Point3,
-    pub color: Color
+    pub color: Color,
+    pub transform_matrix: Option<TransformMatrix>
 }
 
 impl Box3 {
-    pub fn new(min_bound: Point3, max_bound: Point3, color: Color) -> Box3 {
+    pub fn new(min_bound: Point3, max_bound: Point3, color: Color, transform_matrix: Option<TransformMatrix>) -> Box3 {
         Box3 {
             min_bound,
             max_bound,
-            color
+            color,
+            transform_matrix
         }
     }
 
@@ -33,18 +37,24 @@ impl Box3 {
                             || (point.z() - self.max_bound.z()).abs() < 0.000001
                             { 1.0 } else { 0.0 };
 
-        Vec3::new(normal_x, normal_y, normal_z).normalized()
+        Vec3::new(normal_x, normal_y, normal_z, false).normalized()
     }
 }
 
 impl Hit for Box3 {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+        let mut t_ray = *ray;
+
+        if self.transform_matrix.is_some() {
+            t_ray = ray.transform(&self.transform_matrix.as_ref().unwrap().mat);
+        }
+
         let mut tmin: f64 = t_min;
         let mut tmax: f64 = t_max;
 
         for i in 0..3 {
-            let t1 = (self.min_bound[i] - ray.origin()[i]) * ray.direction_inv()[i];
-            let t2 = (self.max_bound[i] - ray.origin()[i]) * ray.direction_inv()[i];
+            let t1 = (self.min_bound[i] - t_ray.origin()[i]) * t_ray.direction_inv()[i];
+            let t2 = (self.max_bound[i] - t_ray.origin()[i]) * t_ray.direction_inv()[i];
 
             tmin = tmin.max(t1.min(t2));
             tmax = tmax.min(t1.max(t2));
@@ -53,13 +63,19 @@ impl Hit for Box3 {
         if tmin > tmax {
             return None;
         }
+        
+        let mut hit_point = t_ray.at(tmin);
+        let mut normal = self.normal_at(hit_point);
 
-        let hit_point = ray.at(tmin);
-        let normal = self.normal_at(hit_point);
-        let front_face = ray.direction().dot(normal) < 0.0;
+        if self.transform_matrix.is_some() {
+            hit_point = hit_point.transform(&self.transform_matrix.as_ref().unwrap().inv);
+            normal = normal.transform(&transpose(&self.transform_matrix.as_ref().unwrap().inv));
+        }
+
+        let front_face = t_ray.direction().dot(normal) < 0.0;
 
         Some(HitRecord {
-            tmin,
+            t_min: tmin,
             point: hit_point,
             normal: if front_face { normal } else { -normal },
             front_face,

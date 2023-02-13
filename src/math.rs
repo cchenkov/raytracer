@@ -7,3 +7,15 @@ pub fn clamp(x: f64, min: f64, max: f64) -> f64{
     else if x > max { max }
     else { x }
 }
+
+pub fn transpose(matrix: &[[f64; 4]; 4]) -> [[f64; 4]; 4] {
+    let mut result = [[0.0; 4]; 4];
+
+    for i in 0..4 {
+        for j in 0..4 {
+            result[j][i] = matrix[i][j];
+        }
+    }
+
+    result
+}

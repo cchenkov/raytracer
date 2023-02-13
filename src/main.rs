@@ -5,14 +5,30 @@ use std::io::{BufWriter, Write};
 
 use raytracer::math::{div_up, clamp};
 use raytracer::vec3::Vec3;
-use raytracer::hit::Hit;
+use raytracer::ray::Ray;
+use raytracer::hit::{HitRecord, Hit};
 use raytracer::sphere::Sphere;
 use raytracer::box3::Box3;
 use raytracer::camera::Camera;
 use raytracer::progressbar::ProgressBar;
+use raytracer::transform::{translation_matrix, scaling_matrix, y_rotation_matrix};
 
 use Vec3 as Point3;
 use Vec3 as Color;
+
+fn trace_ray(world: &Vec<Box<dyn Hit>>, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+    let mut closest: f64 = t_max;
+    let mut hit_record: Option<HitRecord> = None;
+
+    for object in world {
+        if let Some(record) = object.hit(ray, t_min, closest) {
+            closest = record.t_min;
+            hit_record = Some(record);
+        }
+    }
+
+    hit_record
+}
 
 fn main() {
     let args : Vec<String> = env::args().collect();
@@ -30,9 +46,9 @@ fn main() {
 
     // camera
     let camera = Camera::new(
-        Point3::new(3.0, 3.0, 10.0), 
-        Point3::new(0.0, 0.0, -1.0), 
-        Vec3::new(0.0, 1.0, 0.0), 
+        Point3::new(0.0, 0.0, 10.0, true), 
+        Point3::new(0.0, 0.0, -1.0, true), 
+        Vec3::new(0.0, 1.0, 0.0, false), 
         90.0, 
         aspect_ratio,
     );
@@ -42,11 +58,20 @@ fn main() {
 
     // objects
     let color_multiplier = 1.0 / 255.0;
-    let green_color = Color::new(34.0, 139.0, 34.0) * color_multiplier;
-    let red_color = Color::new(196.0, 30.0, 58.0) * color_multiplier;
-    let background = Color::new(127.0, 127.0, 127.0) * color_multiplier;
-    let _sphere = Sphere::new(Point3::new(2.0, 0.0, 4.0), 1.0, green_color);
-    let cube = Box3::new(Point3::new(-1.0, -1.0, -1.0), Point3::new(1.0, 1.0, 1.0), red_color);
+    let green_color = Color::new(34.0, 139.0, 34.0, false) * color_multiplier;
+    let red_color = Color::new(196.0, 30.0, 58.0, false) * color_multiplier;
+    let background = Color::new(127.0, 127.0, 127.0, false) * color_multiplier;
+    let vec1 = Vec3::new(-1.0, 0.0, 0.0, false);
+    let _translation1 = translation_matrix(&vec1);
+    let scaling1 = scaling_matrix(1.5, 1.5, 1.5);
+    let rotation_y45 = y_rotation_matrix(45.0);
+    let sphere = Sphere::new(Point3::new(0.0, 0.0, 0.0, true), 1.0, green_color, Some(scaling1));
+    let cube = Box3::new(Point3::new(-1.0, -1.0, -1.0, true), Point3::new(1.0, 1.0, 1.0, true), red_color, Some(rotation_y45));
+
+    // world
+    let mut world: Vec<Box<dyn Hit>> = Vec::new();
+    world.push(Box::new(sphere));
+    world.push(Box::new(cube));
 
     // progress bar
     let length: usize = 50;
@@ -55,16 +80,16 @@ fn main() {
     let mut progress_bar = ProgressBar::new(total, length, &mut stdout);
 
     // render
+    let t_min: f64 = 0.001;
+    let t_max: f64 = f64::INFINITY;
+    let light = Vec3::new(0.25, 0.5, 0.75, false).normalized();
     let timer = time::Instant::now();
-    let tmin: f64 = 0.001;
-    let tmax: f64 = f64::INFINITY;
-    let light = Vec3::new(0.25, 0.5, 0.75).normalized();
 
     println!("\nRendering started...\n");
 
     for y in (0..image_height).rev() {
         for x in 0..image_width {
-            let mut pixel_color = Color::new(0.0, 0.0, 0.0);
+            let mut pixel_color = Color::new(0.0, 0.0, 0.0, false);
 
             for dx in (-samples_per_pixel / 2)..div_up(samples_per_pixel, 2) {
                 for dy in (-samples_per_pixel / 2)..div_up(samples_per_pixel, 2) {
@@ -73,10 +98,11 @@ fn main() {
 
                     let ray = camera.get_ray(u, v);
 
-                    if let Some(record) = cube.hit(&ray, tmin, tmax) {
-                        pixel_color = pixel_color + record.color * record.normal.dot(light).max(0.0);
-                    } else {
-                        pixel_color = pixel_color + background;
+                    match trace_ray(&world, &ray, t_min, t_max) {
+                        Some(hit_record) =>
+                            pixel_color = pixel_color + hit_record.color * hit_record.normal.dot(light).max(0.0),
+                        None => 
+                            pixel_color = pixel_color + background
                     }
                 }
             }

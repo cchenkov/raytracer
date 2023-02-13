@@ -1,4 +1,5 @@
 use crate::vec3::Vec3;
+use crate::transform::Transform;
 
 use Vec3 as Point3;
 
@@ -28,5 +29,21 @@ impl Ray {
 
     pub fn at(&self, t: f64) -> Point3 {
         self.origin + self.direction * t
+    }
+}
+
+impl Transform for Ray {
+    type Output = Self;
+
+    fn transform(&self, matrix: &[[f64; 4]; 4]) -> Self::Output {
+        let new_origin = self.origin.transform(matrix);
+        let new_direction = self.direction.transform(matrix);
+        let new_direction_inv = 1.0 / new_direction;
+
+        Self::Output {
+            origin: new_origin,
+            direction: new_direction,
+            direction_inv: new_direction_inv
+        }
     }
 }
