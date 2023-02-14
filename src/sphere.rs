@@ -39,14 +39,9 @@ impl Hit for Sphere {
         let c = oc.length_squared() - self.radius * self.radius;
         let discriminant = half_b * half_b - a * c;
 
-        // println!("{} {} {} {}", discriminant, half_b, a, c);
-
         if discriminant < 0.0 {
-            // println!("discriminant is < 0");
             return None;
         }
-
-        // println!("discriminant is > 0");
 
         let sqrtd = discriminant.sqrt();
         let mut t = (-half_b - sqrtd) / a;
@@ -55,12 +50,9 @@ impl Hit for Sphere {
             t = (-half_b + sqrtd) / a;
 
             if t < t_min || t > t_max {
-                // println!("no root in range");
                 return None;
             }
         }
-
-        // println!("has roots");
 
         let mut hit_point = t_ray.at(t);
         let mut normal = (hit_point - self.center) / self.radius;

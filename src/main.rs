@@ -61,11 +61,10 @@ fn main() {
     let green_color = Color::new(34.0, 139.0, 34.0, false) * color_multiplier;
     let red_color = Color::new(196.0, 30.0, 58.0, false) * color_multiplier;
     let background = Color::new(127.0, 127.0, 127.0, false) * color_multiplier;
-    let vec1 = Vec3::new(-1.0, 0.0, 0.0, false);
-    let _translation1 = translation_matrix(&vec1);
-    let scaling1 = scaling_matrix(1.5, 1.5, 1.5);
+    let _translation = translation_matrix(&Vec3::new(-1.0, 0.0, 0.0, false));
+    let scaling = scaling_matrix(1.5, 1.5, 1.5);
     let rotation_y45 = y_rotation_matrix(45.0);
-    let sphere = Sphere::new(Point3::new(0.0, 0.0, 0.0, true), 1.0, green_color, Some(scaling1));
+    let sphere = Sphere::new(Point3::new(0.0, 0.0, 0.0, true), 1.0, green_color, Some(scaling));
     let cube = Box3::new(Point3::new(-1.0, -1.0, -1.0, true), Point3::new(1.0, 1.0, 1.0, true), red_color, Some(rotation_y45));
 
     // world
