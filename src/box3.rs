@@ -46,7 +46,7 @@ impl Hit for Box3 {
         let mut t_ray = *ray;
 
         if self.transform_matrix.is_some() {
-            t_ray = ray.transform(&self.transform_matrix.as_ref().unwrap().mat);
+            t_ray = ray.transform(&self.transform_matrix.as_ref().unwrap().inv);
         }
 
         let mut tmin: f64 = t_min;
@@ -66,13 +66,12 @@ impl Hit for Box3 {
         
         let mut hit_point = t_ray.at(tmin);
         let mut normal = self.normal_at(hit_point);
+        let front_face = t_ray.direction().dot(normal) < 0.0;
 
         if self.transform_matrix.is_some() {
-            hit_point = hit_point.transform(&self.transform_matrix.as_ref().unwrap().inv);
+            hit_point = hit_point.transform(&self.transform_matrix.as_ref().unwrap().mat);
             normal = normal.transform(&transpose(&self.transform_matrix.as_ref().unwrap().inv));
         }
-
-        let front_face = t_ray.direction().dot(normal) < 0.0;
 
         Some(HitRecord {
             t_min: tmin,

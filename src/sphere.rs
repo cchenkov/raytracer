@@ -56,13 +56,12 @@ impl Hit for Sphere {
 
         let mut hit_point = t_ray.at(t);
         let mut normal = (hit_point - self.center) / self.radius;
+        let front_face = t_ray.direction().dot(normal) < 0.0;
 
         if self.transform_matrix.is_some() {
             hit_point = hit_point.transform(&self.transform_matrix.as_ref().unwrap().mat);
-            normal = normal.transform(&transpose(&self.transform_matrix.as_ref().unwrap().mat));
+            normal = normal.transform(&transpose(&self.transform_matrix.as_ref().unwrap().inv));
         }
-
-        let front_face = t_ray.direction().dot(normal) < 0.0;
 
         Some(HitRecord {
             t_min: t,
