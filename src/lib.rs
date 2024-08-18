@@ -7,3 +7,4 @@ pub mod box3;
 pub mod transform;
 pub mod camera;
 pub mod progressbar;
+pub mod brdf;

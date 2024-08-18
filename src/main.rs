@@ -12,6 +12,7 @@ use raytracer::box3::Box3;
 use raytracer::camera::Camera;
 use raytracer::progressbar::ProgressBar;
 use raytracer::transform::{translation_matrix, scaling_matrix, y_rotation_matrix};
+use raytracer::brdf::{d, g, f};
 
 use Vec3 as Point3;
 use Vec3 as Color;
@@ -28,6 +29,42 @@ fn trace_ray(world: &Vec<Box<dyn Hit>>, ray: &Ray, t_min: f64, t_max: f64) -> Op
     }
 
     hit_record
+}
+
+fn shade(hit_record: &HitRecord, ray: &Ray, light: &Vec3) -> Color {
+    let hit_point = hit_record.point;
+    let normal = hit_record.normal.normalized();
+    let view_dir = -ray.direction().normalized();
+    let light_dir = (*light - hit_point).normalized();
+    let halfway = (view_dir + light_dir).normalized();
+
+    let alpha = 0.5;
+
+    let f0 = Vec3::new(0.17, 0.17, 0.17, false);
+    let ks = f(f0, view_dir, halfway);
+    let kd = Vec3::new(1.0, 1.0, 1.0, false) - ks;
+
+    let lambert = hit_record.color / std::f64::consts::PI;
+
+    let d_val = d(alpha, normal, halfway);
+    let g_val = g(alpha, normal, view_dir, light_dir);
+    let f_val = f(f0, view_dir, halfway);
+
+    let numerator = d_val * g_val * f_val;
+    let denominator = (4.0 * normal.dot(view_dir).max(0.0) * normal.dot(light_dir).max(0.0)).max(0.000001);
+
+    let cook_torrance = numerator / denominator;
+    let brdf = kd * lambert + cook_torrance;
+    let light_color = Vec3::new(4.0, 4.0, 4.0, false);
+
+    brdf * light_color * normal.dot(light_dir).max(0.0)
+}
+
+fn ray_color(world: &Vec<Box<dyn Hit>>, ray: &Ray, light: &Vec3, t_min: f64, t_max: f64) -> Color {
+    match trace_ray(world, ray, t_min, t_max) {
+        Some(hit_record) => shade(&hit_record, ray, light),
+        None => Color::new(0.5, 0.5, 0.5, false)
+    }
 }
 
 fn main() {
@@ -59,18 +96,18 @@ fn main() {
     // objects
     let color_multiplier = 1.0 / 255.0;
     let green_color = Color::new(34.0, 139.0, 34.0, false) * color_multiplier;
-    let red_color = Color::new(196.0, 30.0, 58.0, false) * color_multiplier;
-    let background = Color::new(127.0, 127.0, 127.0, false) * color_multiplier;
+    let _red_color = Color::new(196.0, 30.0, 58.0, false) * color_multiplier;
+    let _background = Color::new(127.0, 127.0, 127.0, false) * color_multiplier;
     let _translation = translation_matrix(&Vec3::new(-1.0, 0.0, 0.0, false));
-    let scaling = scaling_matrix(1.5, 1.5, 1.5);
-    let rotation_y45 = y_rotation_matrix(45.0);
+    let scaling = scaling_matrix(2.0, 2.0, 2.0);
+    let rotation_y45 = y_rotation_matrix(0.0);
     let sphere = Sphere::new(Point3::new(0.0, 0.0, 0.0, true), 1.0, green_color, Some(scaling));
-    let cube = Box3::new(Point3::new(-1.0, -1.0, -1.0, true), Point3::new(1.0, 1.0, 1.0, true), red_color, Some(rotation_y45));
+    // let _cube = Box3::new(Point3::new(-1.0, -1.0, -1.0, true), Point3::new(1.0, 1.0, 1.0, true), red_color, Some(rotation_y45));
 
     // world
     let mut world: Vec<Box<dyn Hit>> = Vec::new();
     world.push(Box::new(sphere));
-    world.push(Box::new(cube));
+    // world.push(Box::new(cube));
 
     // progress bar
     let length: usize = 50;
@@ -81,7 +118,8 @@ fn main() {
     // render
     let t_min: f64 = 0.001;
     let t_max: f64 = f64::INFINITY;
-    let light = Vec3::new(0.25, 0.5, 0.75, false).normalized();
+    // let light = Vec3::new(0.25, 0.5, 0.75, false).normalized();
+    let light = Vec3::new(2.0, 4.0, 6.0, false);
     let timer = time::Instant::now();
 
     println!("\nRendering started...\n");
@@ -94,15 +132,8 @@ fn main() {
                 for dy in (-samples_per_pixel / 2)..div_up(samples_per_pixel, 2) {
                     let u = (f64::from(x) + f64::from(dx) / f64::from(samples_per_pixel)) / f64::from(image_width - 1);
                     let v = (f64::from(y) + f64::from(dy) / f64::from(samples_per_pixel)) / f64::from(image_height - 1);
-
                     let ray = camera.get_ray(u, v);
-
-                    match trace_ray(&world, &ray, t_min, t_max) {
-                        Some(hit_record) =>
-                            pixel_color = pixel_color + hit_record.color * hit_record.normal.dot(light).max(0.0),
-                        None => 
-                            pixel_color = pixel_color + background
-                    }
+                    pixel_color = pixel_color + ray_color(&world, &ray, &light, t_min, t_max);
                 }
             }
 
