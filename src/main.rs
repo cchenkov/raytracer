@@ -11,7 +11,7 @@ use raytracer::sphere::Sphere;
 use raytracer::box3::Box3;
 use raytracer::camera::Camera;
 use raytracer::progressbar::ProgressBar;
-use raytracer::transform::{translation_matrix, scaling_matrix, y_rotation_matrix};
+use raytracer::transform::{translation_matrix, scaling_matrix, x_rotation_matrix, y_rotation_matrix};
 use raytracer::brdf::{d, g, f};
 
 use Vec3 as Point3;
@@ -96,18 +96,20 @@ fn main() {
     // objects
     let color_multiplier = 1.0 / 255.0;
     let green_color = Color::new(34.0, 139.0, 34.0, false) * color_multiplier;
-    let _red_color = Color::new(196.0, 30.0, 58.0, false) * color_multiplier;
+    let red_color = Color::new(196.0, 30.0, 58.0, false) * color_multiplier;
     let _background = Color::new(127.0, 127.0, 127.0, false) * color_multiplier;
     let _translation = translation_matrix(&Vec3::new(-1.0, 0.0, 0.0, false));
-    let scaling = scaling_matrix(2.0, 2.0, 2.0);
-    let rotation_y45 = y_rotation_matrix(0.0);
-    let sphere = Sphere::new(Point3::new(0.0, 0.0, 0.0, true), 1.0, green_color, Some(scaling));
-    // let _cube = Box3::new(Point3::new(-1.0, -1.0, -1.0, true), Point3::new(1.0, 1.0, 1.0, true), red_color, Some(rotation_y45));
+    let scaling_x1 = scaling_matrix(1.0, 1.0, 1.0);
+    let scaling_x2 = scaling_matrix(2.0, 2.0, 2.0);
+    let rotation_x45 = x_rotation_matrix(30.0);
+    let rotation_y45 = y_rotation_matrix(45.0);
+    let _sphere = Sphere::new(Point3::new(0.0, 0.0, 0.0, true), 1.0, green_color, Some(scaling_x1));
+    let cube = Box3::new(Point3::new(-1.0, -1.0, -1.0, true), Point3::new(1.0, 1.0, 1.0, true), red_color, Some(rotation_x45 * rotation_y45 * scaling_x2));
 
     // world
     let mut world: Vec<Box<dyn Hit>> = Vec::new();
-    world.push(Box::new(sphere));
-    // world.push(Box::new(cube));
+    // world.push(Box::new(sphere));
+    world.push(Box::new(cube));
 
     // progress bar
     let length: usize = 50;

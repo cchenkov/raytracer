@@ -1,3 +1,5 @@
+use std::ops::Mul;
+use crate::math::multiply;
 use crate::vec3::Vec3;
 
 pub trait Transform {
@@ -9,6 +11,17 @@ pub trait Transform {
 pub struct TransformMatrix {
     pub mat: [[f64; 4]; 4],
     pub inv: [[f64; 4]; 4]
+}
+
+impl Mul for TransformMatrix {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        TransformMatrix { 
+            mat: multiply(&self.mat, &rhs.mat),
+            inv: multiply(&rhs.inv, &self.inv), 
+        }
+    }
 }
 
 pub fn translation_matrix(delta: &Vec3) -> TransformMatrix {

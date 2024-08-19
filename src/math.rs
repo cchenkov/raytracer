@@ -19,3 +19,17 @@ pub fn transpose(matrix: &[[f64; 4]; 4]) -> [[f64; 4]; 4] {
 
     result
 }
+
+pub fn multiply(a: &[[f64; 4]; 4], b: &[[f64; 4]; 4]) -> [[f64; 4]; 4] {
+    let mut result = [[0.0; 4]; 4];
+
+    for i in 0..4 {
+        for j in 0..4 {
+            for k in 0..4 {
+                result[i][j] += a[i][k] * b[k][j];
+            }
+        }
+    }
+
+    result
+}
