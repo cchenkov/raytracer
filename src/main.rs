@@ -5,96 +5,16 @@ use std::io::{BufWriter, Write};
 
 use raytracer::math::{div_up, clamp};
 use raytracer::vec3::Vec3;
-use raytracer::ray::Ray;
-use raytracer::hit::{HitRecord, Hit};
+use raytracer::hit::{Hit};
 use raytracer::sphere::Sphere;
 use raytracer::box3::Box3;
 use raytracer::camera::Camera;
 use raytracer::progressbar::ProgressBar;
 use raytracer::transform::{scaling_matrix, x_rotation_matrix, y_rotation_matrix};
-use raytracer::brdf::{d, g, f};
+use raytracer::render::{ray_color};
 
 use Vec3 as Point3;
 use Vec3 as Color;
-
-fn trace_ray(world: &Vec<Box<dyn Hit>>, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-    let mut closest: f64 = t_max;
-    let mut hit_record: Option<HitRecord> = None;
-
-    for object in world {
-        if let Some(record) = object.hit(ray, t_min, closest) {
-            closest = record.t_min;
-            hit_record = Some(record);
-        }
-    }
-
-    hit_record
-}
-
-fn shade(world: &Vec<Box<dyn Hit>>, hit_record: &HitRecord, ray: &Ray, light: &Vec3) -> Color {
-    let hit_point = hit_record.point;
-    let normal = hit_record.normal.normalized();
-    let view_dir = -ray.direction().normalized();
-    let light_dir = (*light - hit_point).normalized();
-    let halfway = (view_dir + light_dir).normalized();
-
-    let num_shadow_rays = 4;
-    let light_radius = 1.0;
-
-    let mut shadow_factor = 0.0;
-
-    for i in 0..num_shadow_rays {
-        let offset_x = (rand::random::<f64>() - 0.5) * light_radius;
-        let offset_y = (rand::random::<f64>() - 0.5) * light_radius;
-        let offset_z = (rand::random::<f64>() - 0.5) * light_radius;
-        let offset_light = *light + Vec3::new(offset_x, offset_y, offset_z, false);
-
-        let shadow_ray_dir = (offset_light - hit_point).normalized();
-        let shadow_ray = Ray::new(hit_point, shadow_ray_dir);
-
-        let mut in_shadow = false;
-        for object in world {
-            if let Some(_) = object.hit(&shadow_ray, 0.001, f64::INFINITY) {
-                in_shadow = true;
-                break;
-            }
-        }
-
-        if !in_shadow {
-            shadow_factor += 1.0;
-        }
-    }
-
-    shadow_factor /= num_shadow_rays as f64;
-
-    let alpha = 0.5;
-
-    let f0 = Vec3::new(0.08, 0.08, 0.08, false);
-    let ks = f(f0, view_dir, halfway);
-    let kd = Vec3::new(1.0, 1.0, 1.0, false) - ks;
-
-    let lambert = hit_record.color / std::f64::consts::PI;
-
-    let d_val = d(alpha, normal, halfway);
-    let g_val = g(alpha, normal, view_dir, light_dir);
-    let f_val = f(f0, view_dir, halfway);
-
-    let numerator = d_val * g_val * f_val;
-    let denominator = (4.0 * normal.dot(view_dir).max(0.0) * normal.dot(light_dir).max(0.0)).max(0.000001);
-
-    let cook_torrance = numerator / denominator;
-    let brdf = kd * lambert + ks * cook_torrance;
-    let light_color = Vec3::new(4.0, 4.0, 4.0, false);
-
-    brdf * light_color * normal.dot(light_dir).max(0.0) * shadow_factor
-}
-
-fn ray_color(world: &Vec<Box<dyn Hit>>, ray: &Ray, light: &Vec3, t_min: f64, t_max: f64) -> Color {
-    match trace_ray(world, ray, t_min, t_max) {
-        Some(hit_record) => shade(world, &hit_record, ray, light),
-        None => Color::new(0.5, 0.5, 0.5, false)
-    }
-}
 
 fn main() {
     let args : Vec<String> = env::args().collect();
@@ -105,6 +25,7 @@ fn main() {
     let image_width = 800;
     let image_height = (image_width as f64 / aspect_ratio) as i32;
     let samples_per_pixel = 4;
+    let scale = 1.0 / f64::from(samples_per_pixel * samples_per_pixel);
 
     // output file
     let file = File::create(path).expect("Unable to open file");
@@ -112,8 +33,8 @@ fn main() {
 
     // camera
     let camera = Camera::new(
-        Point3::new(0.0, 5.0, 10.0, true),
-        Point3::new(0.0, 0.0, -1.0, true),
+        Point3::new(0.0, 1.0, 10.0, true),
+        Point3::new(0.0, 0.0, 0.0, true),
         Vec3::new(0.0, 1.0, 0.0, false),
         90.0,
         aspect_ratio,
@@ -126,13 +47,13 @@ fn main() {
     let color_multiplier = 1.0 / 255.0;
     let green_color = Color::new(34.0, 139.0, 34.0, false) * color_multiplier;
     let red_color = Color::new(196.0, 30.0, 58.0, false) * color_multiplier;
-    let _background = Color::new(127.0, 127.0, 127.0, false) * color_multiplier;
-    let scaling_x1 = scaling_matrix(2.0, 2.0, 2.0);
-    let scaling_x2 = scaling_matrix(4.0, 4.0, 4.0);
-    let rotation_x45 = x_rotation_matrix(30.0);
-    let rotation_y45 = y_rotation_matrix(45.0);
-    let sphere = Sphere::new(Point3::new(0.0, 0.0, 0.0, true), 0.5, green_color, None);
-    let sphere2 = Sphere::new(Point3::new(0.0, -4.0, 0.0, true), 2.0, red_color, None);
+    let _background = Color::new(135.0, 206.0, 235.0, false) * color_multiplier;
+    // let scaling_x1 = scaling_matrix(2.0, 2.0, 2.0);
+    // let scaling_x2 = scaling_matrix(4.0, 4.0, 4.0);
+    // let rotation_x45 = x_rotation_matrix(30.0);
+    // let rotation_y45 = y_rotation_matrix(45.0);
+    let sphere = Sphere::new(Point3::new(0.0, 1.0, 2.0, true), 0.5, green_color, None);
+    let sphere2 = Sphere::new(Point3::new(0.0, -20.0, 0.0, true), 20.0, red_color, None);
     // let cube = Box3::new(Point3::new(-0.5, -0.5, -0.5, true), Point3::new(0.5, 0.5, 0.5, true), red_color, Some(translation));
 
     // world
@@ -149,7 +70,7 @@ fn main() {
     // render
     let t_min: f64 = 0.001;
     let t_max: f64 = f64::INFINITY;
-    let light = Vec3::new(0.0, 12.0, 0.0, false);
+    let light = Vec3::new(-6.0, 12.0, 6.0, false);
     let timer = time::Instant::now();
 
     println!("\nRendering started...\n");
@@ -166,8 +87,6 @@ fn main() {
                     pixel_color = pixel_color + ray_color(&world, &ray, &light, t_min, t_max);
                 }
             }
-
-            let scale = 1.0 / f64::from(samples_per_pixel * samples_per_pixel);
 
             let r = pixel_color.x() * scale;
             let g = pixel_color.y() * scale;
