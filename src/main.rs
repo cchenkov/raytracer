@@ -11,7 +11,7 @@ use raytracer::sphere::Sphere;
 use raytracer::box3::Box3;
 use raytracer::camera::Camera;
 use raytracer::progressbar::ProgressBar;
-use raytracer::transform::{translation_matrix, scaling_matrix, x_rotation_matrix, y_rotation_matrix};
+use raytracer::transform::{scaling_matrix, x_rotation_matrix, y_rotation_matrix};
 use raytracer::brdf::{d, g, f};
 
 use Vec3 as Point3;
@@ -31,16 +31,45 @@ fn trace_ray(world: &Vec<Box<dyn Hit>>, ray: &Ray, t_min: f64, t_max: f64) -> Op
     hit_record
 }
 
-fn shade(hit_record: &HitRecord, ray: &Ray, light: &Vec3) -> Color {
+fn shade(world: &Vec<Box<dyn Hit>>, hit_record: &HitRecord, ray: &Ray, light: &Vec3) -> Color {
     let hit_point = hit_record.point;
     let normal = hit_record.normal.normalized();
     let view_dir = -ray.direction().normalized();
     let light_dir = (*light - hit_point).normalized();
     let halfway = (view_dir + light_dir).normalized();
 
+    let num_shadow_rays = 4;
+    let light_radius = 1.0;
+
+    let mut shadow_factor = 0.0;
+
+    for i in 0..num_shadow_rays {
+        let offset_x = (rand::random::<f64>() - 0.5) * light_radius;
+        let offset_y = (rand::random::<f64>() - 0.5) * light_radius;
+        let offset_z = (rand::random::<f64>() - 0.5) * light_radius;
+        let offset_light = *light + Vec3::new(offset_x, offset_y, offset_z, false);
+
+        let shadow_ray_dir = (offset_light - hit_point).normalized();
+        let shadow_ray = Ray::new(hit_point, shadow_ray_dir);
+
+        let mut in_shadow = false;
+        for object in world {
+            if let Some(_) = object.hit(&shadow_ray, 0.001, f64::INFINITY) {
+                in_shadow = true;
+                break;
+            }
+        }
+
+        if !in_shadow {
+            shadow_factor += 1.0;
+        }
+    }
+
+    shadow_factor /= num_shadow_rays as f64;
+
     let alpha = 0.5;
 
-    let f0 = Vec3::new(0.17, 0.17, 0.17, false);
+    let f0 = Vec3::new(0.08, 0.08, 0.08, false);
     let ks = f(f0, view_dir, halfway);
     let kd = Vec3::new(1.0, 1.0, 1.0, false) - ks;
 
@@ -54,15 +83,15 @@ fn shade(hit_record: &HitRecord, ray: &Ray, light: &Vec3) -> Color {
     let denominator = (4.0 * normal.dot(view_dir).max(0.0) * normal.dot(light_dir).max(0.0)).max(0.000001);
 
     let cook_torrance = numerator / denominator;
-    let brdf = kd * lambert + cook_torrance;
+    let brdf = kd * lambert + ks * cook_torrance;
     let light_color = Vec3::new(4.0, 4.0, 4.0, false);
 
-    brdf * light_color * normal.dot(light_dir).max(0.0)
+    brdf * light_color * normal.dot(light_dir).max(0.0) * shadow_factor
 }
 
 fn ray_color(world: &Vec<Box<dyn Hit>>, ray: &Ray, light: &Vec3, t_min: f64, t_max: f64) -> Color {
     match trace_ray(world, ray, t_min, t_max) {
-        Some(hit_record) => shade(&hit_record, ray, light),
+        Some(hit_record) => shade(world, &hit_record, ray, light),
         None => Color::new(0.5, 0.5, 0.5, false)
     }
 }
@@ -83,10 +112,10 @@ fn main() {
 
     // camera
     let camera = Camera::new(
-        Point3::new(0.0, 0.0, 10.0, true), 
-        Point3::new(0.0, 0.0, -1.0, true), 
-        Vec3::new(0.0, 1.0, 0.0, false), 
-        90.0, 
+        Point3::new(0.0, 5.0, 10.0, true),
+        Point3::new(0.0, 0.0, -1.0, true),
+        Vec3::new(0.0, 1.0, 0.0, false),
+        90.0,
         aspect_ratio,
     );
 
@@ -98,18 +127,18 @@ fn main() {
     let green_color = Color::new(34.0, 139.0, 34.0, false) * color_multiplier;
     let red_color = Color::new(196.0, 30.0, 58.0, false) * color_multiplier;
     let _background = Color::new(127.0, 127.0, 127.0, false) * color_multiplier;
-    let _translation = translation_matrix(&Vec3::new(-1.0, 0.0, 0.0, false));
-    let scaling_x1 = scaling_matrix(1.0, 1.0, 1.0);
-    let scaling_x2 = scaling_matrix(2.0, 2.0, 2.0);
+    let scaling_x1 = scaling_matrix(2.0, 2.0, 2.0);
+    let scaling_x2 = scaling_matrix(4.0, 4.0, 4.0);
     let rotation_x45 = x_rotation_matrix(30.0);
     let rotation_y45 = y_rotation_matrix(45.0);
-    let _sphere = Sphere::new(Point3::new(0.0, 0.0, 0.0, true), 1.0, green_color, Some(scaling_x1));
-    let cube = Box3::new(Point3::new(-1.0, -1.0, -1.0, true), Point3::new(1.0, 1.0, 1.0, true), red_color, Some(rotation_x45 * rotation_y45 * scaling_x2));
+    let sphere = Sphere::new(Point3::new(0.0, 0.0, 0.0, true), 0.5, green_color, None);
+    let sphere2 = Sphere::new(Point3::new(0.0, -4.0, 0.0, true), 2.0, red_color, None);
+    // let cube = Box3::new(Point3::new(-0.5, -0.5, -0.5, true), Point3::new(0.5, 0.5, 0.5, true), red_color, Some(translation));
 
     // world
     let mut world: Vec<Box<dyn Hit>> = Vec::new();
-    // world.push(Box::new(sphere));
-    world.push(Box::new(cube));
+    world.push(Box::new(sphere));
+    world.push(Box::new(sphere2));
 
     // progress bar
     let length: usize = 50;
@@ -120,8 +149,7 @@ fn main() {
     // render
     let t_min: f64 = 0.001;
     let t_max: f64 = f64::INFINITY;
-    // let light = Vec3::new(0.25, 0.5, 0.75, false).normalized();
-    let light = Vec3::new(2.0, 4.0, 6.0, false);
+    let light = Vec3::new(0.0, 12.0, 0.0, false);
     let timer = time::Instant::now();
 
     println!("\nRendering started...\n");

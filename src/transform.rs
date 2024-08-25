@@ -8,6 +8,7 @@ pub trait Transform {
     fn transform(&self, matrix: &[[f64; 4]; 4]) -> Self::Output;
 }
 
+#[derive(Debug)]
 pub struct TransformMatrix {
     pub mat: [[f64; 4]; 4],
     pub inv: [[f64; 4]; 4]
