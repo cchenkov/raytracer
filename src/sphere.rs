@@ -2,24 +2,24 @@ use crate::vec3::Vec3;
 use crate::ray::Ray;
 use crate::hit::{HitRecord, Hit};
 use crate::transform::{Transform, TransformMatrix};
-use crate::math::transpose;
+use crate::math::{transpose};
+use crate::material::Material;
 
 use Vec3 as Point3;
-use Vec3 as Color;
 
 pub struct Sphere {
     pub center: Point3,
     pub radius: f64,
-    pub color: Color,
+    pub material: Material,
     pub transform_matrix: Option<TransformMatrix>
 }
 
 impl Sphere {
-    pub fn new(center: Point3, radius: f64, color: Color, transform_matrix: Option<TransformMatrix>) -> Sphere {
+    pub fn new(center: Point3, radius: f64, material: Material, transform_matrix: Option<TransformMatrix>) -> Sphere {
         Sphere {
             center,
             radius,
-            color,
+            material,
             transform_matrix
         }
     }
@@ -68,7 +68,7 @@ impl Hit for Sphere {
             point: hit_point,
             normal: if front_face { normal } else { -normal },
             front_face,
-            color: self.color
+            material: self.material
         })
     }
 }

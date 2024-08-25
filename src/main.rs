@@ -12,20 +12,28 @@ use raytracer::camera::Camera;
 use raytracer::progressbar::ProgressBar;
 use raytracer::transform::{scaling_matrix, x_rotation_matrix, y_rotation_matrix};
 use raytracer::render::{ray_color};
+use raytracer::material::Material;
 
 use Vec3 as Point3;
 use Vec3 as Color;
 
 fn main() {
+    // command-line arguments
     let args : Vec<String> = env::args().collect();
+
+    if args.len() < 2 {
+        eprintln!("Usage: raytracer <out_path>");
+        std::process::exit(1)
+    }
 
     // image
     let path = &args[1];
     let aspect_ratio = 1.0;
     let image_width = 800;
     let image_height = (image_width as f64 / aspect_ratio) as i32;
-    let samples_per_pixel = 4;
+    let samples_per_pixel = 2;
     let scale = 1.0 / f64::from(samples_per_pixel * samples_per_pixel);
+    let max_bounces = 2;
 
     // output file
     let file = File::create(path).expect("Unable to open file");
@@ -33,7 +41,7 @@ fn main() {
 
     // camera
     let camera = Camera::new(
-        Point3::new(0.0, 1.0, 10.0, true),
+        Point3::new(4.0, 1.0, 10.0, true),
         Point3::new(0.0, 0.0, 0.0, true),
         Vec3::new(0.0, 1.0, 0.0, false),
         90.0,
@@ -52,8 +60,11 @@ fn main() {
     // let scaling_x2 = scaling_matrix(4.0, 4.0, 4.0);
     // let rotation_x45 = x_rotation_matrix(30.0);
     // let rotation_y45 = y_rotation_matrix(45.0);
-    let sphere = Sphere::new(Point3::new(0.0, 1.0, 2.0, true), 0.5, green_color, None);
-    let sphere2 = Sphere::new(Point3::new(0.0, -20.0, 0.0, true), 20.0, red_color, None);
+    let green_material = Material::new(green_color, 0.25);
+    let red_material = Material::new(red_color, 0.25);
+    let sphere = Sphere::new(Point3::new(3.0, 1.0, 2.0, true), 2.0, green_material, None);
+    let sphere2 = Sphere::new(Point3::new(-4.0, 1.0, 2.0, true), 4.0, red_material, None);
+    // let sphere2 = Sphere::new(Point3::new(0.0, -20.0, 0.0, true), 20.0, red_material, None);
     // let cube = Box3::new(Point3::new(-0.5, -0.5, -0.5, true), Point3::new(0.5, 0.5, 0.5, true), red_color, Some(translation));
 
     // world
@@ -70,7 +81,7 @@ fn main() {
     // render
     let t_min: f64 = 0.001;
     let t_max: f64 = f64::INFINITY;
-    let light = Vec3::new(-6.0, 12.0, 6.0, false);
+    let light = Vec3::new(0.0, 6.0, 8.0, false);
     let timer = time::Instant::now();
 
     println!("\nRendering started...\n");
@@ -84,7 +95,7 @@ fn main() {
                     let u = (f64::from(x) + f64::from(dx) / f64::from(samples_per_pixel)) / f64::from(image_width - 1);
                     let v = (f64::from(y) + f64::from(dy) / f64::from(samples_per_pixel)) / f64::from(image_height - 1);
                     let ray = camera.get_ray(u, v);
-                    pixel_color = pixel_color + ray_color(&world, &ray, &light, t_min, t_max);
+                    pixel_color = pixel_color + ray_color(&world, &ray, &light, t_min, t_max, max_bounces);
                 }
             }
 

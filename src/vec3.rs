@@ -67,6 +67,32 @@ impl Add for Vec3 {
     }
 }
 
+impl Add<f64> for Vec3 {
+    type Output = Self;
+
+    fn add(self, rhs: f64) -> Self::Output {
+        Self::Output {
+            x: self.x + rhs,
+            y: self.y + rhs,
+            z: self.z + rhs,
+            is_point: self.is_point
+        }
+    }
+}
+
+impl Add<Vec3> for f64 {
+    type Output = Vec3;
+
+    fn add(self, rhs: Vec3) -> Self::Output {
+        Self::Output {
+            x: self + rhs.x,
+            y: self + rhs.y,
+            z: self + rhs.z,
+            is_point: rhs.is_point
+        }
+    }
+}
+
 impl Sub for Vec3 {
     type Output = Self;
 
@@ -76,6 +102,32 @@ impl Sub for Vec3 {
             y: self.y - rhs.y,
             z: self.z - rhs.z,
             is_point: self.is_point
+        }
+    }
+}
+
+impl Sub<f64> for Vec3 {
+    type Output = Self;
+
+    fn sub(self, rhs: f64) -> Self::Output {
+        Self::Output {
+            x: self.x - rhs,
+            y: self.y - rhs,
+            z: self.z - rhs,
+            is_point: self.is_point
+        }
+    }
+}
+
+impl Sub<Vec3> for f64 {
+    type Output = Vec3;
+
+    fn sub(self, rhs: Vec3) -> Self::Output {
+        Self::Output {
+            x: self - rhs.x,
+            y: self - rhs.y,
+            z: self - rhs.z,
+            is_point: rhs.is_point
         }
     }
 }

@@ -3,23 +3,23 @@ use crate::ray::Ray;
 use crate::hit::{HitRecord, Hit};
 use crate::transform::{Transform, TransformMatrix};
 use crate::math::transpose;
+use crate::material::Material;
 
 use Vec3 as Point3;
-use Vec3 as Color;
 
 pub struct Box3 {
     pub min_bound: Point3,
     pub max_bound: Point3,
-    pub color: Color,
+    pub material: Material,
     pub transform_matrix: Option<TransformMatrix>
 }
 
 impl Box3 {
-    pub fn new(min_bound: Point3, max_bound: Point3, color: Color, transform_matrix: Option<TransformMatrix>) -> Box3 {
+    pub fn new(min_bound: Point3, max_bound: Point3, material: Material, transform_matrix: Option<TransformMatrix>) -> Box3 {
         Box3 {
             min_bound,
             max_bound,
-            color,
+            material,
             transform_matrix
         }
     }
@@ -78,7 +78,7 @@ impl Hit for Box3 {
             point: hit_point,
             normal: if front_face { normal } else { -normal },
             front_face,
-            color: self.color
+            material: self.material
         })
     }
 }

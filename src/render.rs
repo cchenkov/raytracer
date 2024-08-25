@@ -5,10 +5,14 @@ use crate::brdf::{d, g, f};
 
 use Vec3 as Color;
 
-pub fn ray_color(world: &Vec<Box<dyn Hit>>, ray: &Ray, light: &Vec3, t_min: f64, t_max: f64) -> Color {
+pub fn ray_color(world: &Vec<Box<dyn Hit>>, ray: &Ray, light: &Vec3, t_min: f64, t_max: f64, depth: i32) -> Color {
+    if depth <= 0 {
+        return Color::new(0.08, 0.18, 0.29, false);
+    }
+
     match trace_ray(world, ray, t_min, t_max) {
-        Some(hit_record) => shade(world, &hit_record, ray, light),
-        None => Color::new(0.52, 0.80, 0.92, false)
+        Some(hit_record) => shade(world, &hit_record, ray, light, depth),
+        None => Color::new(0.08, 0.18, 0.29, false) // Color::new(0.52, 0.80, 0.92, false)
     }
 }
 
@@ -57,7 +61,7 @@ fn cast_shadow(world: &Vec<Box<dyn Hit>>, hit_point: &Vec3, light: &Vec3) -> f64
     shadow_factor / num_shadow_rays as f64
 }
 
-fn shade(world: &Vec<Box<dyn Hit>>, hit_record: &HitRecord, ray: &Ray, light: &Vec3) -> Color {
+fn shade(world: &Vec<Box<dyn Hit>>, hit_record: &HitRecord, ray: &Ray, light: &Vec3, depth: i32) -> Color {
     let hit_point = hit_record.point;
     let normal = hit_record.normal.normalized();
     let view_dir = -ray.direction().normalized();
@@ -66,13 +70,13 @@ fn shade(world: &Vec<Box<dyn Hit>>, hit_record: &HitRecord, ray: &Ray, light: &V
 
     let shadow_factor = cast_shadow(world, &hit_point, light);
 
-    let alpha = 0.25;
+    let alpha = 0.3;
 
-    let f0 = Vec3::new(0.08, 0.08, 0.08, false);
+    let f0 = Vec3::new(0.3, 0.3, 0.3, false);
     let ks = f(f0, view_dir, halfway);
     let kd = Vec3::new(1.0, 1.0, 1.0, false) - ks;
 
-    let lambert = hit_record.color / std::f64::consts::PI;
+    let lambert = hit_record.material.color / std::f64::consts::PI;
 
     let d_val = d(alpha, normal, halfway);
     let g_val = g(alpha, normal, view_dir, light_dir);
@@ -85,6 +89,18 @@ fn shade(world: &Vec<Box<dyn Hit>>, hit_record: &HitRecord, ray: &Ray, light: &V
     let brdf = kd * lambert + ks * cook_torrance;
     let light_color = Vec3::new(4.0, 4.0, 4.0, false);
 
-    brdf * light_color * normal.dot(light_dir).max(0.0) * shadow_factor
+    let diffuse_color = brdf * light_color * normal.dot(light_dir).max(0.0) * shadow_factor;
+    let mut reflected_color = Color::new(0.0, 0.0, 0.0, false);
+
+    if hit_record.material.reflectivity > 0.0 {
+        let reflected_ray = Ray::new(
+            hit_point,
+            ray.direction() - 2.0 * normal * ray.direction().dot(normal)
+        );
+
+        reflected_color = ray_color(world, &reflected_ray, light, 0.001, f64::INFINITY, depth - 1);
+    }
+
+    diffuse_color * (1.0 - hit_record.material.reflectivity) + reflected_color * hit_record.material.reflectivity
 }
 

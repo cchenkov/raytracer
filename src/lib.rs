@@ -9,3 +9,4 @@ pub mod camera;
 pub mod progressbar;
 pub mod brdf;
 pub mod render;
+pub mod material;

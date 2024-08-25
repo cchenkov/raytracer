@@ -1,7 +1,7 @@
 use crate::vec3::Vec3;
 use crate::ray::Ray;
+use crate::material::Material;
 
-use Vec3 as Color;
 use Vec3 as Point3;
 
 pub struct HitRecord {
@@ -9,7 +9,7 @@ pub struct HitRecord {
     pub point: Point3,
     pub normal: Vec3,
     pub front_face: bool,
-    pub color: Color
+    pub material: Material,
 }
 
 pub trait Hit {
