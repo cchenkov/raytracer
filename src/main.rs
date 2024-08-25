@@ -7,11 +7,9 @@ use raytracer::math::{div_up, clamp};
 use raytracer::vec3::Vec3;
 use raytracer::hit::{Hit};
 use raytracer::sphere::Sphere;
-use raytracer::box3::Box3;
 use raytracer::camera::Camera;
 use raytracer::progressbar::ProgressBar;
-use raytracer::transform::{scaling_matrix, x_rotation_matrix, y_rotation_matrix};
-use raytracer::render::{ray_color};
+use raytracer::render::{trace_ray};
 use raytracer::material::Material;
 
 use Vec3 as Point3;
@@ -56,16 +54,10 @@ fn main() {
     let green_color = Color::new(34.0, 139.0, 34.0, false) * color_multiplier;
     let red_color = Color::new(196.0, 30.0, 58.0, false) * color_multiplier;
     let _background = Color::new(135.0, 206.0, 235.0, false) * color_multiplier;
-    // let scaling_x1 = scaling_matrix(2.0, 2.0, 2.0);
-    // let scaling_x2 = scaling_matrix(4.0, 4.0, 4.0);
-    // let rotation_x45 = x_rotation_matrix(30.0);
-    // let rotation_y45 = y_rotation_matrix(45.0);
-    let green_material = Material::new(green_color, 0.25);
-    let red_material = Material::new(red_color, 0.25);
+    let green_material = Material::new(green_color, 0.25, 0.25);
+    let red_material = Material::new(red_color, 0.25, 0.25);
     let sphere = Sphere::new(Point3::new(3.0, 1.0, 2.0, true), 2.0, green_material, None);
-    let sphere2 = Sphere::new(Point3::new(-4.0, 1.0, 2.0, true), 4.0, red_material, None);
-    // let sphere2 = Sphere::new(Point3::new(0.0, -20.0, 0.0, true), 20.0, red_material, None);
-    // let cube = Box3::new(Point3::new(-0.5, -0.5, -0.5, true), Point3::new(0.5, 0.5, 0.5, true), red_color, Some(translation));
+    let sphere2 = Sphere::new(Point3::new(-4.0, 1.0, 1.0, true), 4.0, red_material, None);
 
     // world
     let mut world: Vec<Box<dyn Hit>> = Vec::new();
@@ -79,9 +71,8 @@ fn main() {
     let mut progress_bar = ProgressBar::new(total, length, &mut stdout);
 
     // render
-    let t_min: f64 = 0.001;
-    let t_max: f64 = f64::INFINITY;
-    let light = Vec3::new(0.0, 6.0, 8.0, false);
+    let light_pos = Vec3::new(0.0, 6.0, 8.0, false);
+    let light_color = Vec3::new(1.0, 1.0, 1.0, false);
     let timer = time::Instant::now();
 
     println!("\nRendering started...\n");
@@ -95,7 +86,7 @@ fn main() {
                     let u = (f64::from(x) + f64::from(dx) / f64::from(samples_per_pixel)) / f64::from(image_width - 1);
                     let v = (f64::from(y) + f64::from(dy) / f64::from(samples_per_pixel)) / f64::from(image_height - 1);
                     let ray = camera.get_ray(u, v);
-                    pixel_color = pixel_color + ray_color(&world, &ray, &light, t_min, t_max, max_bounces);
+                    pixel_color = pixel_color + trace_ray(&world, &ray, &light_pos, &light_color, max_bounces);
                 }
             }
 
