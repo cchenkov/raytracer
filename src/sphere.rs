@@ -60,7 +60,7 @@ impl Hit for Sphere {
 
         if self.transform_matrix.is_some() {
             hit_point = hit_point.transform(&self.transform_matrix.as_ref().unwrap().mat);
-            normal = normal.transform(&transpose(&self.transform_matrix.as_ref().unwrap().inv));
+            normal = normal.transform(&transpose(&self.transform_matrix.as_ref().unwrap().inv)).normalized();
         }
 
         Some(HitRecord {

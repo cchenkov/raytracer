@@ -74,7 +74,7 @@ fn perturb_reflection(reflect_dir: &Vec3, roughness: f64) -> Vec3 {
         false
     );
 
-    (*reflect_dir + perturbation * roughness).normalized()
+    (*reflect_dir + perturbation * roughness * roughness).normalized()
 }
 
 fn sample_light(light_pos: &Vec3, light_radius: f64, samples_count: i32) -> Vec<Vec3> {
@@ -135,24 +135,24 @@ pub fn trace_ray(world: &Vec<Box<dyn Hit>>, ray: &Ray, light_pos: &Vec3, light_c
         // let brdf = brdf(hit_record.material, hit_record.normal, view_dir, light_dir);
         // let direct_illumination = brdf * *light_color * hit_record.normal.dot(light_dir).max(0.0);
 
-        let reflect_dir = ray.direction() - 2.0 * hit_record.normal * ray.direction().dot(hit_record.normal);
-        let reflect_ray = Ray::new(hit_record.point, reflect_dir);
-        let reflect_color = trace_ray(world, &reflect_ray, light_pos, light_color, depth - 1);
-
         // let reflect_dir = ray.direction() - 2.0 * hit_record.normal * ray.direction().dot(hit_record.normal);
-        // let mut reflect_color = Color::new(0.0, 0.0, 0.0, false);
+        // let reflect_ray = Ray::new(hit_record.point, reflect_dir);
+        // let reflect_color = trace_ray(world, &reflect_ray, light_pos, light_color, depth - 1);
 
-        // for _ in 0..REFLECT_SAMPLES_COUNT {
-        //     // let direction = random_in_cone(&reflect_dir, hit_record.material.roughness);
-        //     // let reflect_ray = Ray::new(hit_record.point, direction);
-        //     // let bias = random_in_hemisphere(&hit_record.normal) * hit_record.material.roughness;
-        //     // let reflect_ray = Ray::new(hit_record.point, (reflect_dir + bias).normalized());
-        //     let direction = perturb_reflection(&reflect_dir, hit_record.material.roughness);
-        //     let reflect_ray = Ray::new(hit_record.point, direction);
-        //     reflect_color = reflect_color + trace_ray(world, &reflect_ray, light_pos, light_color, depth - 1);
-        // }
+        let reflect_dir = ray.direction() - 2.0 * hit_record.normal * ray.direction().dot(hit_record.normal);
+        let mut reflect_color = Color::new(0.0, 0.0, 0.0, false);
 
-        // reflect_color = reflect_color / (REFLECT_SAMPLES_COUNT as f64);
+        for _ in 0..REFLECT_SAMPLES_COUNT {
+            // let direction = random_in_cone(&reflect_dir, hit_record.material.roughness);
+            // let reflect_ray = Ray::new(hit_record.point, direction);
+            // let bias = random_in_hemisphere(&hit_record.normal) * hit_record.material.roughness;
+            // let reflect_ray = Ray::new(hit_record.point, (reflect_dir + bias).normalized());
+            let direction = perturb_reflection(&reflect_dir, hit_record.material.roughness);
+            let reflect_ray = Ray::new(hit_record.point, direction);
+            reflect_color = reflect_color + trace_ray(world, &reflect_ray, light_pos, light_color, depth - 1);
+        }
+
+        reflect_color = reflect_color / (REFLECT_SAMPLES_COUNT as f64);
 
         return direct_illumination + reflect_color * hit_record.material.metallic;
     }
