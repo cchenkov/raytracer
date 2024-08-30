@@ -26,6 +26,10 @@ impl Vec3 {
         self.z
     }
 
+    pub fn is_point(&self) -> bool {
+        self.is_point
+    }
+
     pub fn length(&self) -> f64 {
         self.length_squared().sqrt()
     }

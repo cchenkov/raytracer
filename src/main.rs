@@ -53,25 +53,88 @@ fn main() {
     write!(file_writer, "P3\n{} {}\n255\n", image_width, image_height).expect("Unable to write file");
 
     // objects
-    let color_multiplier = 1.0 / 255.0;
-    let green_color = Color::new(34.0, 139.0, 34.0, false) * color_multiplier;
-    let red_color = Color::new(196.0, 30.0, 58.0, false) * color_multiplier;
-    let _background = Color::new(135.0, 206.0, 235.0, false) * color_multiplier;
-    let green_material = Material::new(green_color, 0.25, 0.25);
-    let red_material = Material::new(red_color, 0.35, 0.5);
-    let translation = translation_matrix(&Vec3::new(0.25, 0.0, 0.0, false));
-    let rotation = x_rotation_matrix(25.0);
-    let sphere = Sphere::new(Point3::new(2.0, 1.0, 3.0, true), 1.0, green_material, None);
-    let sphere2 = Sphere::new(Point3::new(-4.0, 1.0, 1.0, true), 3.0, red_material, None);
-    let cube = Box3::new(Point3::new(-1.0, -1.0, -1.0, true), Point3::new(1.0, 1.0, 1.0, true), red_material, Some(translation * rotation));
+    // let color_multiplier = 1.0 / 255.0;
+    // let green_color = Color::new(34.0, 139.0, 34.0, false) * color_multiplier;
+    // let red_color = Color::new(196.0, 30.0, 58.0, false) * color_multiplier;
+    // let _background = Color::new(135.0, 206.0, 235.0, false) * color_multiplier;
+    // let green_material = Material::new(green_color, 0.25, 0.25);
+    // let red_material = Material::new(red_color, 0.35, 0.5);
+    // let translation = translation_matrix(&Vec3::new(0.25, 0.0, 0.0, false));
+    // let rotation = x_rotation_matrix(25.0);
+    // let sphere = Sphere::new(Point3::new(2.0, 1.0, 3.0, true), 1.0, green_material, None);
+    // let sphere2 = Sphere::new(Point3::new(-4.0, 1.0, 1.0, true), 3.0, red_material, None);
+    // let cube = Box3::new(Point3::new(-1.0, -1.0, -1.0, true), Point3::new(1.0, 1.0, 1.0, true), red_material, Some(translation * rotation));
     
-    let ground = Box3::new(
-        Point3::new(-50.0, -6.0, -20.0, true),
+    let rwall = Material::new(
+        Color::new(0.3, 0.0, 0.0, false),
+        0.35,
+        0.35
+    );
+
+    // let rwall = Material::new(
+    //     Color::new(0.98, 0.5, 0.45, false),
+    //     0.5,
+    //     0.1
+    // );
+
+    let gwall = Material::new(
+        Color::new(0.0, 0.3, 0.0, false),
+        0.35,
+        0.35
+    );
+
+    let wwall = Material::new(
+        Color::new(0.41, 0.42, 0.43, false),
+        0.5,
+        0.1
+    );
+
+    let bottom = Box3::new(
+        Point3::new(-50.0, -6.0, -10.0, true),
         Point3::new(50.0, -5.0, 7.5, true),
+        rwall,
+        None
+    );
+
+    let left = Box3::new(
+        Point3::new(-50.0, -5.0, -10.0, true),
+        Point3::new(-8.75, 5.0, 7.5, true),
+        gwall,
+        None
+    );
+
+    let right = Box3::new(
+        Point3::new(8.75, -5.0, -10.0, true),
+        Point3::new(50.0, 5.0, 7.5, true),
+        gwall,
+        None
+    );
+
+    let top = Box3::new(
+        Point3::new(-50.0, 5.0, -10.0, true),
+        Point3::new(50.0, 6.0, 7.5, true),
+        rwall,
+        None
+    );
+
+    let asphere = Sphere::new(
+        Point3::new(-1.0, -1.0, 2.0, true),
+        0.75,
         Material::new(
-            Color::new(0.1, 0.1, 0.1, false),
-            1.0,
-            0.0
+            Color::new(1.0, 0.5, 0.31, false),
+            0.25,
+            0.25
+        ),
+        None
+    );
+
+    let bsphere = Sphere::new(
+        Point3::new(1.0, -1.0, 2.0, true),
+        1.0,
+        Material::new(
+            Color::new(0.5, 0.0, 0.5, false),
+            0.75,
+            0.9
         ),
         None
     );
@@ -87,19 +150,19 @@ fn main() {
     //     // )
     // );
 
-    let ball = Sphere::new(
-        Point3::new(-2.0, -2.0, 0.0, true),
-        1.0,
-        red_material,
-        None
-    );
+    // let ball = Sphere::new(
+    //     Point3::new(-2.0, -2.0, 0.0, true),
+    //     1.0,
+    //     red_material,
+    //     None
+    // );
 
-    let big_ball = Sphere::new(
-        Point3::new(2.0, -1.0, -1.0, true),
-        2.0,
-        green_material,
-        None
-    );
+    // let big_ball = Sphere::new(
+    //     Point3::new(2.0, -1.0, -1.0, true),
+    //     2.0,
+    //     green_material,
+    //     None
+    // );
 
     // world
     let mut world: Vec<Box<dyn Hit>> = Vec::new();
@@ -107,9 +170,14 @@ fn main() {
     // world.push(Box::new(sphere2));
     // world.push(Box::new(cube));
     // world.push(Box::new(small_cube));
-    world.push(Box::new(ground));
-    world.push(Box::new(ball));
-    world.push(Box::new(big_ball));
+    // world.push(Box::new(ball));
+    // world.push(Box::new(big_ball));
+    world.push(Box::new(bottom));
+    world.push(Box::new(left));
+    world.push(Box::new(right));
+    world.push(Box::new(top));
+    world.push(Box::new(asphere));
+    world.push(Box::new(bsphere));
 
     // progress bar
     let length: usize = 50;
@@ -120,7 +188,7 @@ fn main() {
     // lights
     let light = Light::new(
         Vec3::new(1.0, 1.0, 1.0, false),
-        Vec3::new(-3.0, 5.0, 7.5, false),
+        Vec3::new(0.0, 2.0, 7.5, false),
         0.2
     );
 
