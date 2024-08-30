@@ -1,5 +1,5 @@
-use raytracer::ray::*;
-use raytracer::vec3::*;
+use raytracer::ray::Ray;
+use raytracer::vec3::Vec3;
 use raytracer::transform::*;
 
 const EPSILON: f64 = 1e-10;
@@ -18,30 +18,6 @@ fn test_ray_new() {
     let ray = Ray::new(origin, direction);
     assert_eq!(ray.origin(), origin);
     assert_eq!(ray.direction(), direction);
-    assert_eq!(ray.direction_inv(), Vec3::new(1.0 / 4.0, 1.0 / 5.0, 1.0 / 6.0, false));
-}
-
-#[test]
-fn test_ray_origin() {
-    let origin = Vec3::new(1.0, 2.0, 3.0, true);
-    let direction = Vec3::new(4.0, 5.0, 6.0, false);
-    let ray = Ray::new(origin, direction);
-    assert_eq!(ray.origin(), origin);
-}
-
-#[test]
-fn test_ray_direction() {
-    let origin = Vec3::new(1.0, 2.0, 3.0, true);
-    let direction = Vec3::new(4.0, 5.0, 6.0, false);
-    let ray = Ray::new(origin, direction);
-    assert_eq!(ray.direction(), direction);
-}
-
-#[test]
-fn test_ray_direction_inv() {
-    let origin = Vec3::new(1.0, 2.0, 3.0, true);
-    let direction = Vec3::new(4.0, 5.0, 6.0, false);
-    let ray = Ray::new(origin, direction);
     assert_eq!(ray.direction_inv(), Vec3::new(1.0 / 4.0, 1.0 / 5.0, 1.0 / 6.0, false));
 }
 

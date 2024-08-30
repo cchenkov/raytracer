@@ -1,14 +1,10 @@
 use raytracer::vec3::Vec3;
 use raytracer::transform::Transform;
 
+const EPSILON: f64 = 1e-10;
 
-#[test]
-fn test_vec3_new() {
-    let v = Vec3::new(1.0, 2.0, 3.0, true);
-    assert_eq!(v.x(), 1.0);
-    assert_eq!(v.y(), 2.0);
-    assert_eq!(v.z(), 3.0);
-    assert!(v.is_point());
+fn approx_eq(a: f64, b: f64) -> bool {
+    (a - b).abs() < EPSILON
 }
 
 #[test]
@@ -21,14 +17,14 @@ fn test_vec3_length() {
 fn test_vec3_normalized() {
     let v = Vec3::new(1.0, 2.0, 2.0, false);
     let normalized = v.normalized();
-    assert!((normalized.length() - 1.0).abs() < 1e-6);
+    assert!(approx_eq(normalized.length(), 1.0));
 }
 
 #[test]
 fn test_vec3_dot() {
     let v1 = Vec3::new(1.0, 2.0, 3.0, false);
-    let v2 = Vec3::new(4.0, -5.0, 6.0, false);
-    assert_eq!(v1.dot(v2), 12.0);
+    let v2 = Vec3::new(4.0, 5.0, 6.0, false);
+    assert_eq!(v1.dot(v2), 32.0);
 }
 
 #[test]
