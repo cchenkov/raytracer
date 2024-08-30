@@ -12,6 +12,7 @@ use raytracer::camera::Camera;
 use raytracer::progressbar::ProgressBar;
 use raytracer::render::{trace_ray};
 use raytracer::material::Material;
+use raytracer::light::Light;
 use raytracer::transform::{translation_matrix, scaling_matrix, x_rotation_matrix, y_rotation_matrix};
 
 use Vec3 as Point3;
@@ -41,7 +42,7 @@ fn main() {
 
     // camera
     let camera = Camera::new(
-        Point3::new(4.0, 1.0, 10.0, true),
+        Point3::new(0.0, 0.0, 7.5, true), // Point3::new(0.0, 5.0, 7.5, true), // Point3::new(8.0, 1.0, 10.0, true),
         Point3::new(0.0, 0.0, 0.0, true),
         Vec3::new(0.0, 1.0, 0.0, false),
         90.0,
@@ -56,20 +57,59 @@ fn main() {
     let green_color = Color::new(34.0, 139.0, 34.0, false) * color_multiplier;
     let red_color = Color::new(196.0, 30.0, 58.0, false) * color_multiplier;
     let _background = Color::new(135.0, 206.0, 235.0, false) * color_multiplier;
-    let green_material = Material::new(green_color, 0.25, 0.4);
-    let red_material = Material::new(red_color, 0.25, 0.4);
+    let green_material = Material::new(green_color, 0.25, 0.25);
+    let red_material = Material::new(red_color, 0.35, 0.5);
     let translation = translation_matrix(&Vec3::new(0.25, 0.0, 0.0, false));
     let rotation = x_rotation_matrix(25.0);
-    let scaling = scaling_matrix(4.0, 4.0, 4.0);
-    // let sphere = Sphere::new(Point3::new(0.0, 0.0, 0.0, true), 1.0, green_material, Some(translation));
-    // let sphere2 = Sphere::new(Point3::new(-4.0, 1.0, 1.0, true), 4.0, red_material, None);
+    let sphere = Sphere::new(Point3::new(2.0, 1.0, 3.0, true), 1.0, green_material, None);
+    let sphere2 = Sphere::new(Point3::new(-4.0, 1.0, 1.0, true), 3.0, red_material, None);
     let cube = Box3::new(Point3::new(-1.0, -1.0, -1.0, true), Point3::new(1.0, 1.0, 1.0, true), red_material, Some(translation * rotation));
+    
+    let ground = Box3::new(
+        Point3::new(-50.0, -6.0, -20.0, true),
+        Point3::new(50.0, -5.0, 7.5, true),
+        Material::new(
+            Color::new(0.1, 0.1, 0.1, false),
+            1.0,
+            0.0
+        ),
+        None
+    );
+
+    // let small_cube = Box3::new(
+    //     Point3::new(3.0, -3.0, 1.0, true),
+    //     Point3::new(4.0, -2.0, 2.0, true),
+    //     red_material,
+    //     None
+    //     // Some(
+    //     //     x_rotation_matrix(20.0)
+    //     //     // * y_rotation_matrix(15.0)
+    //     // )
+    // );
+
+    let ball = Sphere::new(
+        Point3::new(-2.0, -2.0, 0.0, true),
+        1.0,
+        red_material,
+        None
+    );
+
+    let big_ball = Sphere::new(
+        Point3::new(2.0, -1.0, -1.0, true),
+        2.0,
+        green_material,
+        None
+    );
 
     // world
     let mut world: Vec<Box<dyn Hit>> = Vec::new();
     // world.push(Box::new(sphere));
     // world.push(Box::new(sphere2));
-    world.push(Box::new(cube));
+    // world.push(Box::new(cube));
+    // world.push(Box::new(small_cube));
+    world.push(Box::new(ground));
+    world.push(Box::new(ball));
+    world.push(Box::new(big_ball));
 
     // progress bar
     let length: usize = 50;
@@ -77,9 +117,14 @@ fn main() {
     let mut stdout = std::io::stdout();
     let mut progress_bar = ProgressBar::new(total, length, &mut stdout);
 
+    // lights
+    let light = Light::new(
+        Vec3::new(1.0, 1.0, 1.0, false),
+        Vec3::new(-3.0, 5.0, 7.5, false),
+        0.2
+    );
+
     // render
-    let light_pos = Vec3::new(0.0, 6.0, 8.0, false);
-    let light_color = Vec3::new(1.0, 1.0, 1.0, false);
     let timer = time::Instant::now();
 
     println!("\nRendering started...\n");
@@ -93,7 +138,7 @@ fn main() {
                     let u = (f64::from(x) + f64::from(dx) / f64::from(samples_per_pixel)) / f64::from(image_width - 1);
                     let v = (f64::from(y) + f64::from(dy) / f64::from(samples_per_pixel)) / f64::from(image_height - 1);
                     let ray = camera.get_ray(u, v);
-                    pixel_color = pixel_color + trace_ray(&world, &ray, &light_pos, &light_color, max_bounces);
+                    pixel_color = pixel_color + trace_ray(&world, &ray, &light, max_bounces);
                 }
             }
 

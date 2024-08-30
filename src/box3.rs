@@ -1,9 +1,8 @@
 use crate::vec3::Vec3;
 use crate::ray::Ray;
 use crate::hit::{HitRecord, Hit};
-use crate::transform::{Transform, TransformMatrix};
-use crate::math::transpose;
 use crate::material::Material;
+use crate::transform::TransformMatrix;
 
 use Vec3 as Point3;
 
@@ -43,18 +42,12 @@ impl Box3 {
 
 impl Hit for Box3 {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let mut t_ray = *ray;
-
-        if self.transform_matrix.is_some() {
-            t_ray = ray.transform(&self.transform_matrix.as_ref().unwrap().inv);
-        }
-
         let mut tmin: f64 = t_min;
         let mut tmax: f64 = t_max;
 
         for i in 0..3 {
-            let t1 = (self.min_bound[i] - t_ray.origin()[i]) * t_ray.direction_inv()[i];
-            let t2 = (self.max_bound[i] - t_ray.origin()[i]) * t_ray.direction_inv()[i];
+            let t1 = (self.min_bound[i] - ray.origin()[i]) * ray.direction_inv()[i];
+            let t2 = (self.max_bound[i] - ray.origin()[i]) * ray.direction_inv()[i];
 
             tmin = tmin.max(t1.min(t2));
             tmax = tmax.min(t1.max(t2));
@@ -64,14 +57,9 @@ impl Hit for Box3 {
             return None;
         }
         
-        let mut hit_point = t_ray.at(tmin);
-        let mut normal = self.normal_at(hit_point);
-        let front_face = t_ray.direction().dot(normal) < 0.0;
-
-        if self.transform_matrix.is_some() {
-            hit_point = hit_point.transform(&self.transform_matrix.as_ref().unwrap().mat);
-            normal = normal.transform(&transpose(&self.transform_matrix.as_ref().unwrap().inv));
-        }
+        let hit_point = ray.at(tmin);
+        let normal = self.normal_at(hit_point);
+        let front_face = ray.direction().dot(normal) < 0.0;
 
         Some(HitRecord {
             t_min: tmin,
@@ -80,5 +68,9 @@ impl Hit for Box3 {
             front_face,
             material: self.material
         })
+    }
+
+    fn transform_matrix(&self) -> Option<&TransformMatrix> {
+        self.transform_matrix.as_ref()
     }
 }

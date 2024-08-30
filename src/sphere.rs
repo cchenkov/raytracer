@@ -1,9 +1,8 @@
 use crate::vec3::Vec3;
 use crate::ray::Ray;
 use crate::hit::{HitRecord, Hit};
-use crate::transform::{Transform, TransformMatrix};
-use crate::math::{transpose};
 use crate::material::Material;
+use crate::transform::TransformMatrix;
 
 use Vec3 as Point3;
 
@@ -27,15 +26,9 @@ impl Sphere {
 
 impl Hit for Sphere {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let mut t_ray = *ray;
-
-        if self.transform_matrix.is_some() {
-            t_ray = t_ray.transform(&self.transform_matrix.as_ref().unwrap().inv);
-        }
-
-        let oc = t_ray.origin() - self.center;
-        let a = t_ray.direction().length_squared();
-        let half_b = t_ray.direction().dot(oc);
+        let oc = ray.origin() - self.center;
+        let a = ray.direction().length_squared();
+        let half_b = ray.direction().dot(oc);
         let c = oc.length_squared() - self.radius * self.radius;
         let discriminant = half_b * half_b - a * c;
 
@@ -54,14 +47,9 @@ impl Hit for Sphere {
             }
         }
 
-        let mut hit_point = t_ray.at(t);
-        let mut normal = (hit_point - self.center) / self.radius;
-        let front_face = t_ray.direction().dot(normal) < 0.0;
-
-        if self.transform_matrix.is_some() {
-            hit_point = hit_point.transform(&self.transform_matrix.as_ref().unwrap().mat);
-            normal = normal.transform(&transpose(&self.transform_matrix.as_ref().unwrap().inv)).normalized();
-        }
+        let hit_point = ray.at(t);
+        let normal = (hit_point - self.center) / self.radius;
+        let front_face = ray.direction().dot(normal) < 0.0;
 
         Some(HitRecord {
             t_min: t,
@@ -70,5 +58,9 @@ impl Hit for Sphere {
             front_face,
             material: self.material
         })
+    }
+
+    fn transform_matrix(&self) -> Option<&TransformMatrix> {
+        self.transform_matrix.as_ref()
     }
 }

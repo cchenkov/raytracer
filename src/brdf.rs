@@ -1,3 +1,5 @@
+use rand::Rng;
+
 use crate::vec3::Vec3;
 use crate::material::Material;
 
@@ -39,4 +41,51 @@ pub fn brdf(material: Material, n: Vec3, v: Vec3, l: Vec3) -> Vec3 {
     let kd = (Vec3::new(1.0, 1.0, 1.0, false) - ks) * (1.0 - material.metallic);
 
     kd * diffuse + ks * specular
+}
+
+pub fn sample_ggx_vndf(ve: Vec3, alpha: f64) -> Vec3 {
+    let mut rng = rand::thread_rng();
+    let u1 = rng.gen::<f64>();
+    let u2 = rng.gen::<f64>();
+
+    let alpha_x = alpha;
+    let alpha_z = alpha;
+
+    let vh = Vec3::new(ve.x() * alpha_x, ve.y(), ve.z() * alpha_z, false).normalized();
+
+    let lensq = vh.x() * vh.x() + vh.z() * vh.z();
+    let vt1 = if lensq > 0.0 {
+        let inv_sqrt = 1.0 / lensq.sqrt();
+        Vec3::new(-vh.z(), 0.0, vh.x(), false) * inv_sqrt
+    } else {
+        Vec3::new(1.0, 0.0, 0.0, false)
+    };
+    let vt2 = vh.cross(vt1);
+
+    let r = u1.sqrt();
+    let phi = 2.0 * std::f64::consts::PI * u2;
+    let t1 = r * phi.cos();
+    let mut t2 = r * phi.sin();
+    let s = 0.5 * (1.0 + vh.y());
+    t2 = (1.0 - s) * (1.0 - t1 * t1).sqrt() + s * t2;
+
+    let nh = t1 * vt1 + t2 * vt2 + (1.0 - t1 * t1 - t2 * t2).max(0.0).sqrt() * vh;
+
+    Vec3::new(alpha_x * nh.x(), nh.y().max(0.0), alpha_z * nh.z(), false).normalized()
+}
+
+pub fn perturb(v: &Vec3, roughness: f64) -> Vec3 {
+    let mut rng = rand::thread_rng();
+    let offset_x: f64 = rng.gen_range(-0.5..0.5) * roughness * roughness;
+    let offset_y: f64 = rng.gen_range(-0.5..0.5) * roughness * roughness;
+    let offset_z: f64 = rng.gen_range(-0.5..0.5) * roughness * roughness;
+
+    let perturbed_normal = Vec3::new(
+        v.x() + offset_x,
+        v.y() + offset_y,
+        v.z() + offset_z,
+        false,
+    );
+
+    perturbed_normal.normalized()
 }

@@ -52,6 +52,10 @@ impl Vec3 {
             self.is_point
         )
     }
+
+    pub fn reflect(&self, normal: Vec3) -> Vec3 {
+        *self - 2.0 * self.dot(normal) * normal
+    }
 }
 
 impl Add for Vec3 {
